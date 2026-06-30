@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>QR計測レポート</title>
+  <style>
+    :root{--bg:#f6f3ee;--card:#fff;--ink:#202020;--muted:#666;--line:#ded7cc;--accent:#195d64;--accent2:#b46927}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+    header{background:#202020;color:white;padding:24px 18px}
+    h1{margin:0 0 8px;font-size:25px}
+    header p{margin:0;color:#ddd;line-height:1.7;font-size:14px}
+    main{max-width:1080px;margin:0 auto;padding:18px}
+    .nav{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:14px}
+    a{color:var(--accent);text-decoration:none;font-weight:800;font-size:13px}
+    .grid{display:grid;gap:14px}
+    @media(min-width:760px){.kpis{grid-template-columns:repeat(4,1fr)}.two{grid-template-columns:1fr 1fr}}
+    .card{background:white;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 12px 30px rgba(20,10,0,.06)}
+    .kpi-label{font-size:12px;color:var(--muted);margin-bottom:8px}
+    .kpi-value{font-size:32px;font-weight:900;letter-spacing:-.04em}
+    h2{font-size:18px;margin:0 0 12px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{border-bottom:1px solid #eee8de;text-align:left;padding:10px 8px;vertical-align:top}
+    th{background:#fbfaf8;color:#666;font-size:12px}
+    button{border:1px solid var(--line);background:white;border-radius:999px;padding:10px 13px;font-weight:800;cursor:pointer}
+    .primary{background:var(--accent);border-color:var(--accent);color:white}
+    .bar-row{display:grid;grid-template-columns:120px 1fr 50px;gap:10px;align-items:center;margin:10px 0;font-size:13px}
+    .bar{height:12px;background:#eee6dc;border-radius:999px;overflow:hidden}
+    .bar span{display:block;height:100%;background:var(--accent2);border-radius:999px}
+    .note{background:#fff8ed;border:1px solid #eed3ab;border-radius:14px;padding:12px;color:#704c1d;font-size:13px;line-height:1.75;margin-bottom:14px}
+    .error{background:#fff1ef;border:1px solid #ebc6c1;color:#963d35;border-radius:14px;padding:12px;font-size:13px;line-height:1.7;margin-bottom:14px;display:none}
+  </style>
+  <script src="./config.js"></script>
+</head>
+<body>
+<header>
+  <h1>QR計測レポート</h1>
+  <p>Supabaseに保存されたQR読取・予約クリック等を集計します。スマホでQRを読むと、この画面に反映されます。</p>
+</header>
+<main>
+  <div class="nav">
+    <a href="demo_links.html">← QR/仮URL一覧</a>
+    <div>
+      <button id="refreshBtn">更新</button>
+      <button class="primary" id="csvBtn">CSV出力</button>
+    </div>
+  </div>
+
+  <div class="note">
+    レポートは3秒ごとに自動更新します。営業デモでは「ホテルAのQRをスマホで読む → QR読取が増える」を見せられます。
+  </div>
+  <div class="error" id="errorBox"></div>
+
+  <section class="grid kpis" id="kpis"></section>
+
+  <section class="grid two" style="margin-top:14px;">
+    <div class="card">
+      <h2>ホテル別 QR読取数</h2>
+      <div id="hotelBars"></div>
+    </div>
+    <div class="card">
+      <h2>イベント別 件数</h2>
+      <div id="eventBars"></div>
+    </div>
+  </section>
+
+  <section class="card" style="margin-top:14px;">
+    <h2>QR別集計</h2>
+    <table>
+      <thead><tr><th>QR ID</th><th>ホテル</th><th>QR読取</th><th>ページ閲覧</th><th>予約クリック</th><th>地図</th><th>電話</th><th>クーポン</th></tr></thead>
+      <tbody id="qrTable"></tbody>
+    </table>
+  </section>
+
+  <section class="card" style="margin-top:14px;">
+    <h2>直近イベント</h2>
+    <table>
+      <thead><tr><th>時刻</th><th>イベント</th><th>ホテル</th><th>店舗</th><th>QR</th><th>掲載枠</th></tr></thead>
+      <tbody id="eventTable"></tbody>
+    </table>
+  </section>
+</main>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+const cfg = window.SUPABASE_CONFIG || {};
+const errorBox = document.getElementById("errorBox");
+const isConfigured = cfg.url && cfg.anonKey && !cfg.url.includes("PASTE_") && !cfg.anonKey.includes("PASTE_");
+const supabase = isConfigured ? createClient(cfg.url, cfg.anonKey) : null;
+let currentEvents = [];
+
+function showError(msg){
+  errorBox.style.display = "block";
+  errorBox.innerHTML = msg;
+}
+function clearError(){
+  errorBox.style.display = "none";
+  errorBox.innerHTML = "";
+}
+function countBy(arr, key){
+  return arr.reduce((acc, x) => { const v = x[key] || "-"; acc[v] = (acc[v] || 0) + 1; return acc; }, {});
+}
+function countWhere(events, type){ return events.filter(e => e.event_type === type).length; }
+function renderBars(target, counts){
+  const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  const max = Math.max(1, ...entries.map(e=>e[1]));
+  document.getElementById(target).innerHTML = entries.length ? entries.map(([k,v]) => `
+    <div class="bar-row"><div>${k}</div><div class="bar"><span style="width:${Math.round(v/max*100)}%"></span></div><div>${v}</div></div>
+  `).join("") : "<p style='color:#666;font-size:13px;'>まだデータがありません。</p>";
+}
+function render(events){
+  const kpis = [
+    ["QR読取", countWhere(events, "qr_scan")],
+    ["ページ閲覧", countWhere(events, "page_view")],
+    ["予約クリック", countWhere(events, "reserve_click")],
+    ["地図/電話/クーポン", countWhere(events, "map_click") + countWhere(events, "phone_click") + countWhere(events, "coupon_view")]
+  ];
+  document.getElementById("kpis").innerHTML = kpis.map(k => `
+    <div class="card"><div class="kpi-label">${k[0]}</div><div class="kpi-value">${k[1]}</div></div>
+  `).join("");
+
+  const hotelQrScans = {};
+  events.filter(e => e.event_type === "qr_scan").forEach(e => {
+    hotelQrScans[e.hotel_name || e.hotel_id] = (hotelQrScans[e.hotel_name || e.hotel_id] || 0) + 1;
+  });
+  renderBars("hotelBars", hotelQrScans);
+  renderBars("eventBars", countBy(events, "event_type"));
+
+  const byQr = {};
+  events.forEach(e => {
+    const q = e.qr_id || "-";
+    if(!byQr[q]) byQr[q] = {hotel:e.hotel_name || e.hotel_id, qr_scan:0, page_view:0, reserve_click:0, map_click:0, phone_click:0, coupon_view:0};
+    if(byQr[q][e.event_type] !== undefined) byQr[q][e.event_type] += 1;
+  });
+  document.getElementById("qrTable").innerHTML = Object.entries(byQr).map(([qr,v]) => `
+    <tr><td>${qr}</td><td>${v.hotel}</td><td>${v.qr_scan}</td><td>${v.page_view}</td><td>${v.reserve_click}</td><td>${v.map_click}</td><td>${v.phone_click}</td><td>${v.coupon_view}</td></tr>
+  `).join("") || "<tr><td colspan='8'>まだデータがありません。</td></tr>";
+
+  document.getElementById("eventTable").innerHTML = events.slice(0, 50).map(e => `
+    <tr><td>${new Date(e.created_at).toLocaleString("ja-JP")}</td><td>${e.event_type}</td><td>${e.hotel_name || e.hotel_id}</td><td>${e.shop_name || e.shop_id}</td><td>${e.qr_id}</td><td>${e.slot}</td></tr>
+  `).join("") || "<tr><td colspan='6'>まだデータがありません。</td></tr>";
+}
+async function loadEvents(){
+  if(!supabase){
+    showError("Supabase未設定です。<code>config.js</code> にProject URLとanon public keyを入れてください。");
+    render([]);
+    return;
+  }
+  const { data, error } = await supabase
+    .from("events")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(500);
+  if(error){
+    showError("読み込み失敗: " + error.message);
+    return;
+  }
+  clearError();
+  currentEvents = data || [];
+  render(currentEvents);
+}
+function exportCsv(){
+  const header = ["created_at","event_type","hotel_id","hotel_name","shop_id","shop_name","slot","edition","qr_id","page_url"];
+  const rows = [header.join(",")].concat(currentEvents.map(e => header.map(h => `"${String(e[h] ?? "").replaceAll('"','""')}"`).join(",")));
+  const blob = new Blob([rows.join("\n")], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "hotel_qr_events.csv"; a.click();
+  URL.revokeObjectURL(url);
+}
+document.getElementById("refreshBtn").addEventListener("click", loadEvents);
+document.getElementById("csvBtn").addEventListener("click", exportCsv);
+await loadEvents();
+setInterval(loadEvents, 3000);
+</script>
+</body>
+</html>

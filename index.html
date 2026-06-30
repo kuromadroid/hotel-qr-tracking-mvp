@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>札幌ホテルマップ 計測ページ</title>
+  <style>
+    :root{--bg:#f6f3ee;--card:#fff;--ink:#202020;--muted:#666;--line:#ded7cc;--accent:#195d64;--accent2:#b46927;--red:#963d35}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+    header{background:linear-gradient(135deg,#195d64,#2a7b83);color:white;padding:24px 18px 18px}
+    h1{margin:8px 0;font-size:25px;line-height:1.25}
+    header p{margin:0;font-size:14px;line-height:1.7;opacity:.94}
+    .small{font-size:12px;opacity:.88;letter-spacing:.08em}
+    main{max-width:1040px;margin:0 auto;padding:18px;display:grid;grid-template-columns:1fr;gap:16px}
+    @media(min-width:880px){main{grid-template-columns:1fr 340px}}
+    .card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 12px 30px rgba(20,10,0,.06);padding:16px}
+    .shop{display:grid;gap:14px}
+    @media(min-width:680px){.shop{grid-template-columns:260px 1fr}}
+    .photo{min-height:220px;border-radius:16px;background:linear-gradient(135deg,#d7eef3,#fff5e6);display:grid;place-items:center;color:#33636a;font-size:28px;font-weight:800;position:relative;overflow:hidden}
+    .photo:after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.42);right:-80px;bottom:-80px}
+    .badge{display:inline-flex;border-radius:999px;background:#fff2dc;color:#8b4e17;font-size:12px;font-weight:800;padding:5px 10px;margin:2px 5px 2px 0}
+    .tag{display:inline-flex;border-radius:999px;background:#f3f0ea;color:#514a42;font-size:12px;padding:6px 9px;margin:3px 4px 3px 0;border:1px solid #ebe4da}
+    .muted{color:var(--muted);font-size:13px;line-height:1.75}
+    .desc{font-size:14px;line-height:1.85;color:#3d3832}
+    .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+    button,a.btn{appearance:none;border:1px solid var(--line);border-radius:999px;background:white;color:var(--ink);text-decoration:none;font-size:14px;padding:11px 14px;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+    .primary{background:var(--accent);border-color:var(--accent);color:white!important}
+    .orange{background:#fff5e8;border-color:#f1d6af;color:#8b4e17!important}
+    .green{background:#eff8f6;border-color:#cde4df;color:#195d64!important}
+    .danger{background:#fff1ef;border-color:#ebc6c1;color:#963d35!important}
+    .box{background:#fbfaf7;border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:12px}
+    .kv{display:grid;grid-template-columns:110px 1fr;gap:8px;font-size:13px;line-height:1.55;border-bottom:1px solid #eee8de;padding:8px 0}
+    .kv:last-child{border-bottom:none}
+    code{background:#f0ece5;padding:2px 5px;border-radius:5px;font-size:12px}
+    aside{position:sticky;top:12px;align-self:start}
+    .coupon{display:none;background:#fffaf0;border:1px dashed #d39e58;border-radius:14px;padding:12px;margin-top:12px;color:#6f4516;font-size:13px;line-height:1.7}
+    .coupon.show{display:block}
+    .topnav{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:12px}
+    .topnav a{font-size:13px;color:var(--accent);font-weight:800;text-decoration:none}
+    .notice{background:#fff8ed;border:1px solid #eed3ab;border-radius:14px;padding:12px;color:#704c1d;font-size:13px;line-height:1.75;margin-bottom:14px}
+    .status{font-size:12px;line-height:1.7;color:#555;margin-top:10px}
+  </style>
+  <script src="./config.js"></script>
+</head>
+<body>
+<header>
+  <div class="small">HOTEL PAPER MAP → QR → OWNED PAGE → RESERVATION LINK</div>
+  <h1>札幌ホテルマップ 計測ページ</h1>
+  <p>スマホでQRを読むと、このページが開き、SupabaseにQR読取・ページ閲覧・予約クリックを保存します。</p>
+</header>
+
+<main>
+  <section>
+    <div class="topnav">
+      <a href="demo_links.html">← QR/仮URL一覧</a>
+      <a href="report.html">計測レポートを見る →</a>
+    </div>
+    <div class="notice">
+      本番では「予約ページへ」の遷移先を、TableCheck / Google予約 / 食べログ / ホットペッパー / 店舗公式予約ページなどに差し替えます。
+      このMVPでは、まず予約クリックを保存してから仮予約ページへ送ります。
+    </div>
+
+    <article class="card shop">
+      <div class="photo">海鮮</div>
+      <div>
+        <span class="badge">プレミアム掲載</span>
+        <span class="badge">インバウンド対応想定</span>
+        <h2 style="margin:10px 0 4px;font-size:24px;">北海炉端 みなと</h2>
+        <div class="muted">Seafood Robata Minato / 札幌駅・大通周辺 / 徒歩7分</div>
+        <div style="margin:12px 0;">
+          <span class="tag">海鮮</span><span class="tag">刺身</span><span class="tag">北海道地酒</span><span class="tag">英語メニュー</span><span class="tag">カード可</span>
+        </div>
+        <p class="desc">
+          札幌に泊まる観光客・出張客向けの海鮮居酒屋。紙マップでは伝えきれない写真・予算・営業時間・予約導線を自社ページで補い、
+          予約クリックや地図遷移を広告KPIとして計測する想定です。
+        </p>
+
+        <div class="actions">
+          <button class="primary" id="reserveBtn">予約ページへ</button>
+          <button class="green" id="mapBtn">Googleマップを見る</button>
+          <button class="orange" id="phoneBtn">電話する</button>
+          <button class="danger" id="couponBtn">ホテル限定クーポン</button>
+        </div>
+
+        <div class="coupon" id="couponBox">
+          ホテルマップ限定：会計5%OFF<br>
+          クーポンコード：<strong>HOTELMAP</strong><br>
+          実運用では「クーポン表示数」「店頭提示数」を実来店に近い指標として使えます。
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <aside class="card">
+    <h2 style="margin-top:0;">QR流入情報</h2>
+    <div class="box" id="qrInfo"></div>
+    <div class="box">
+      <h3 style="margin:0 0 8px;font-size:15px;">保存ステータス</h3>
+      <div class="status" id="status">初期化中...</div>
+    </div>
+    <div class="box">
+      <h3 style="margin:0 0 8px;font-size:15px;">保存するKPI</h3>
+      <div class="muted">
+        <code>qr_scan</code> QR読取<br>
+        <code>page_view</code> ページ閲覧<br>
+        <code>reserve_click</code> 予約クリック<br>
+        <code>map_click</code> 地図クリック<br>
+        <code>phone_click</code> 電話クリック<br>
+        <code>coupon_view</code> クーポン表示
+      </div>
+    </div>
+  </aside>
+</main>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+const params = new URLSearchParams(location.search);
+const ctx = {
+  hotel_id: params.get("hotel") || "hotel_a",
+  hotel_name: params.get("hotel_name") || (params.get("hotel") === "hotel_b" ? "ホテルB" : "ホテルA"),
+  shop_id: params.get("shop") || "minato",
+  shop_name: "北海炉端 みなと",
+  slot: params.get("slot") || "premium",
+  edition: params.get("edition") || "2026_summer",
+  qr_id: params.get("qr") || "qr_hotelA_minato_premium_2026summer"
+};
+
+const statusEl = document.getElementById("status");
+const cfg = window.SUPABASE_CONFIG || {};
+const isConfigured = cfg.url && cfg.anonKey && !cfg.url.includes("PASTE_") && !cfg.anonKey.includes("PASTE_");
+const supabase = isConfigured ? createClient(cfg.url, cfg.anonKey) : null;
+
+function renderQRInfo(){
+  document.getElementById("qrInfo").innerHTML = `
+    <div class="kv"><b>ホテル</b><span>${ctx.hotel_name} / ${ctx.hotel_id}</span></div>
+    <div class="kv"><b>店舗</b><span>${ctx.shop_name} / ${ctx.shop_id}</span></div>
+    <div class="kv"><b>掲載枠</b><span>${ctx.slot}</span></div>
+    <div class="kv"><b>版</b><span>${ctx.edition}</span></div>
+    <div class="kv"><b>QR ID</b><span>${ctx.qr_id}</span></div>
+  `;
+}
+
+async function logEvent(event_type){
+  if(!supabase){
+    statusEl.innerHTML = "Supabase未設定です。<br><code>config.js</code> にURLとanon keyを入れてください。";
+    return false;
+  }
+  const payload = {
+    event_type,
+    hotel_id: ctx.hotel_id,
+    hotel_name: ctx.hotel_name,
+    shop_id: ctx.shop_id,
+    shop_name: ctx.shop_name,
+    slot: ctx.slot,
+    edition: ctx.edition,
+    qr_id: ctx.qr_id,
+    user_agent: navigator.userAgent,
+    page_url: location.href
+  };
+  const { error } = await supabase.from("events").insert(payload);
+  if(error){
+    console.error(error);
+    statusEl.innerHTML = `保存失敗: ${error.message}`;
+    return false;
+  }
+  statusEl.innerHTML = `保存成功: <code>${event_type}</code>`;
+  return true;
+}
+
+document.getElementById("reserveBtn").addEventListener("click", async () => {
+  await logEvent("reserve_click");
+  const q = new URLSearchParams({
+    from_hotel: ctx.hotel_id,
+    from_qr: ctx.qr_id,
+    shop: ctx.shop_id,
+    lang: "ja"
+  });
+  location.href = "reservation_mock.html?" + q.toString();
+});
+
+document.getElementById("mapBtn").addEventListener("click", async () => {
+  await logEvent("map_click");
+  alert("デモ：地図クリックを保存しました。本番ではGoogleマップへ遷移します。");
+});
+
+document.getElementById("phoneBtn").addEventListener("click", async () => {
+  await logEvent("phone_click");
+  alert("デモ：電話クリックを保存しました。本番では tel:011-000-0000 へ遷移します。");
+});
+
+document.getElementById("couponBtn").addEventListener("click", async () => {
+  document.getElementById("couponBox").classList.toggle("show");
+  await logEvent("coupon_view");
+});
+
+renderQRInfo();
+
+if(!isConfigured){
+  statusEl.innerHTML = "Supabase未設定です。<br><code>config.js</code> を編集してください。";
+} else {
+  await logEvent("qr_scan");
+  await logEvent("page_view");
+}
+</script>
+</body>
+</html>

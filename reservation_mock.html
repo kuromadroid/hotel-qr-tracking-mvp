@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>仮予約ページ</title>
+  <style>
+    body{margin:0;background:#f6f3ee;color:#202020;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
+    main{max-width:720px;margin:0 auto;padding:28px 18px}
+    .card{background:#fff;border:1px solid #ded7cc;border-radius:20px;padding:20px;box-shadow:0 12px 30px rgba(20,10,0,.06)}
+    h1{font-size:25px;margin:0 0 10px}
+    p{line-height:1.8;color:#4a443d}
+    .box{background:#fbfaf7;border:1px solid #eee8de;border-radius:14px;padding:12px;margin:14px 0;font-size:13px;line-height:1.8;color:#555}
+    a{color:#195d64;font-weight:800;text-decoration:none}
+  </style>
+</head>
+<body>
+<main>
+  <div class="card">
+    <h1>仮予約ページ</h1>
+    <p>
+      ここは外部予約サイトの代替ページです。実運用では、このページではなく
+      TableCheck / Google予約 / 食べログ / ホットペッパー / 店舗公式予約ページなどへ飛ばします。
+    </p>
+    <div class="box" id="info"></div>
+    <p>
+      自社ページ側で「予約ページへ」ボタンが押された瞬間に
+      <strong>reserve_click</strong> がSupabaseへ保存されています。
+    </p>
+    <p><a href="report.html">計測レポートを見る →</a></p>
+    <p><a href="demo_links.html">QR/仮URL一覧へ戻る →</a></p>
+  </div>
+</main>
+<script>
+const params = new URLSearchParams(location.search);
+document.getElementById("info").innerHTML = `
+  from_hotel: ${params.get("from_hotel") || "-"}<br>
+  from_qr: ${params.get("from_qr") || "-"}<br>
+  shop: ${params.get("shop") || "-"}<br>
+  lang: ${params.get("lang") || "ja"}
+`;
+</script>
+</body>
+</html>
