@@ -32,7 +32,7 @@ window.APP_DATA = {
       enabled: true,
 
       media: {
-        hero: "",
+        hero: "./assets/shops/minato/Robatayaki.jpg",
         gallery: []
       },
 
