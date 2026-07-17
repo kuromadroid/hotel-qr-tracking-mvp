@@ -354,6 +354,96 @@
       border-radius:5px;
       font-size:12px;
     }
+        .header-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .language-button{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.5);
+      border-radius:999px;
+      background:rgba(255,255,255,.15);
+      color:white;
+      padding:8px 12px;
+      font-size:13px;
+      font-weight:700;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+
+    .language-screen{
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      background:linear-gradient(
+        135deg,
+        rgba(25,93,100,.98),
+        rgba(42,123,131,.98)
+      );
+    }
+
+    .language-card{
+      position:relative;
+      width:min(100%,440px);
+      padding:28px 20px 22px;
+      border-radius:24px;
+      background:white;
+      box-shadow:0 24px 70px rgba(0,0,0,.28);
+      text-align:center;
+    }
+
+    .language-card h2{
+      margin:0 0 6px;
+      font-size:23px;
+    }
+
+    .language-card p{
+      margin:0 0 20px;
+      color:#666;
+      font-size:14px;
+    }
+
+    .language-list{
+      display:grid;
+      gap:10px;
+    }
+
+    .language-choice{
+      width:100%;
+      min-height:50px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:white;
+      font-size:16px;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .language-choice:hover{
+      border-color:var(--accent);
+      background:#eff8f6;
+    }
+
+    .language-close{
+      position:absolute;
+      top:12px;
+      right:14px;
+      width:34px;
+      height:34px;
+      padding:0;
+      border:none;
+      border-radius:50%;
+      background:#f3f0ea;
+      font-size:20px;
+      cursor:pointer;
+    } 
   </style>
 
   <!-- 店舗情報 -->
@@ -364,12 +454,101 @@
 </head>
 
 <body>
+<div class="language-screen" id="languageScreen" hidden>
+  <div class="language-card">
+    <button
+      type="button"
+      class="language-close"
+      id="closeLanguageButton"
+      aria-label="閉じる"
+    >
+      ×
+    </button>
 
-<header>
-  <div class="header-inner">
-    <div class="small">
-      SAPPORO HOTEL RESTAURANT GUIDE
+    <h2>言語を選択してください</h2>
+    <p>Please select your language</p>
+
+    <div class="language-list">
+      <button type="button" class="language-choice" data-language="ja">
+        日本語
+      </button>
+
+      <button type="button" class="language-choice" data-language="en">
+        English
+      </button>
+
+      <button type="button" class="language-choice" data-language="zh-cn">
+        简体中文
+      </button>
+
+      <button type="button" class="language-choice" data-language="zh-tw">
+        繁體中文
+      </button>
+
+      <button type="button" class="language-choice" data-language="ko">
+        한국어
+      </button>
     </div>
+  </div>
+</div>
+  <body>
+
+<div class="language-screen" id="languageScreen" hidden>
+  <div class="language-card">
+    <button
+      type="button"
+      class="language-close"
+      id="closeLanguageButton"
+      aria-label="閉じる"
+    >
+      ×
+    </button>
+
+    <h2>言語を選択してください</h2>
+    <p>Please select your language</p>
+
+    <div class="language-list">
+      <button type="button" class="language-choice" data-language="ja">
+        日本語
+      </button>
+
+      <button type="button" class="language-choice" data-language="en">
+        English
+      </button>
+
+      <button type="button" class="language-choice" data-language="zh-cn">
+        简体中文
+      </button>
+
+      <button type="button" class="language-choice" data-language="zh-tw">
+        繁體中文
+      </button>
+
+      <button type="button" class="language-choice" data-language="ko">
+        한국어
+      </button>
+    </div>
+  </div>
+</div>
+
+  <header>
+  <div class="header-inner">
+    
+    <div class="header-top">
+  <div class="small">
+    SAPPORO HOTEL RESTAURANT GUIDE
+  </div>
+
+  <button
+    type="button"
+    class="language-button"
+    id="languageButton"
+  >
+    🌐 Language
+  </button>
+</div>
+
+    
 
     <h1 id="pageTitle">
       札幌ホテルマップ
@@ -595,9 +774,18 @@ const supportedLanguages =
 const fallbackLanguage =
   settings.fallbackLanguage || "ja";
 
+const urlLanguage =
+  params.get("lang");
+
+const storedLanguage =
+  localStorage.getItem("hotelMapLanguage");
+
+const hasLanguageChoice =
+  Boolean(urlLanguage || storedLanguage);
+
 const requestedLanguage =
-  params.get("lang") ||
-  localStorage.getItem("hotelMapLanguage") ||
+  urlLanguage ||
+  storedLanguage ||
   settings.defaultLanguage ||
   "ja";
 
@@ -606,11 +794,15 @@ const currentLang =
     ? requestedLanguage
     : fallbackLanguage;
 
-localStorage.setItem(
-  "hotelMapLanguage",
-  currentLang
-);
-
+if(
+  urlLanguage &&
+  supportedLanguages.includes(urlLanguage)
+){
+  localStorage.setItem(
+    "hotelMapLanguage",
+    urlLanguage
+  );
+}
 document.documentElement.lang =
   currentLang === "zh-cn"
     ? "zh-CN"
@@ -1283,8 +1475,81 @@ function initialize(){
   logEvent("qr_scan", ctx);
   logEvent("page_view", ctx);
 }
+const languageScreen =
+  document.getElementById("languageScreen");
 
-initialize();
+const languageButton =
+  document.getElementById("languageButton");
+
+const closeLanguageButton =
+  document.getElementById("closeLanguageButton");
+
+const languageNames = {
+  ja: "日本語",
+  en: "English",
+  "zh-cn": "简体中文",
+  "zh-tw": "繁體中文",
+  ko: "한국어"
+};
+
+languageButton.textContent =
+  `🌐 ${languageNames[currentLang] || "Language"}`;
+
+function openLanguageScreen(){
+  languageScreen.hidden = false;
+}
+
+function closeLanguageScreen(){
+  languageScreen.hidden = true;
+}
+
+function changeLanguage(language){
+  if(!supportedLanguages.includes(language)){
+    return;
+  }
+
+  localStorage.setItem(
+    "hotelMapLanguage",
+    language
+  );
+
+  const nextUrl =
+    new URL(location.href);
+
+  nextUrl.searchParams.set(
+    "lang",
+    language
+  );
+
+  location.href =
+    nextUrl.toString();
+}
+
+document
+  .querySelectorAll("[data-language]")
+  .forEach(button => {
+    button.addEventListener("click", () => {
+      changeLanguage(
+        button.dataset.language
+      );
+    });
+  });
+
+languageButton.addEventListener(
+  "click",
+  openLanguageScreen
+);
+
+closeLanguageButton.addEventListener(
+  "click",
+  closeLanguageScreen
+);
+
+if(!hasLanguageChoice){
+  closeLanguageButton.hidden = true;
+  openLanguageScreen();
+}
+  initialize();
 </script>
 
 </body>
