@@ -182,6 +182,92 @@ window.APP_DATA = {
         hotel_a: {},
         hotel_b: {}
       }
+    },
+  ramen_sora: {
+      enabled: true,
+
+      media: {
+        hero: "",
+        gallery: []
+      },
+
+      content: {
+        ja: {
+          name: "札幌らーめん 空",
+          category: "札幌味噌ラーメン",
+          catchcopy: "濃厚な味噌と香ばしい炒め野菜。",
+          description:
+            "札幌らしい濃厚な味噌スープを楽しめるラーメン店です。観光の合間や夕食後の一杯にもおすすめです。",
+          area: "すすきの周辺",
+          access: "ホテルから徒歩5分",
+          price: "1,000〜1,500円",
+          hours: "11:00〜翌1:00",
+          closed: "不定休",
+          tags: [
+            "味噌ラーメン",
+            "札幌名物",
+            "深夜営業",
+            "カウンター席"
+          ]
+        },
+
+        en: {
+          name: "Sapporo Ramen Sora",
+          category: "Sapporo Miso Ramen",
+          catchcopy: "Rich miso broth with aromatic vegetables.",
+          description:
+            "A ramen restaurant serving rich Sapporo-style miso ramen.",
+          area: "Susukino area",
+          access: "5-minute walk from the hotel",
+          price: "¥1,000–¥1,500",
+          hours: "11:00 AM–1:00 AM",
+          closed: "Irregular holidays",
+          tags: [
+            "Miso ramen",
+            "Sapporo specialty",
+            "Open late",
+            "Counter seats"
+          ]
+        }
+      },
+
+      actions: {
+        reservation: {
+          enabled: false,
+          url: ""
+        },
+
+        map: {
+          enabled: false,
+          url: ""
+        },
+
+        instagram: {
+          enabled: false,
+          url: ""
+        },
+
+        phone: {
+          enabled: true,
+          value: "011-111-1111"
+        },
+
+        website: {
+          enabled: false,
+          url: ""
+        }
+      },
+
+      coupon: {
+        enabled: false,
+        code: "",
+        text: {}
+      },
+
+      hotelOverrides: {
+        hotel_a: {},
+        hotel_b: {}
+      }
     }
   }
 };
