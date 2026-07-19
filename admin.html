@@ -236,6 +236,14 @@
 
   <label for="editCatchcopy">キャッチコピー</label>
   <input id="editCatchcopy" type="text">
+      <label for="editDescription">店舗紹介文</label>
+<textarea id="editDescription" rows="5"></textarea>
+
+<label for="editAddress">住所</label>
+<input id="editAddress" type="text">
+
+<label for="editHours">営業時間</label>
+<input id="editHours" type="text">
       
 <label for="editStatus">公開状態</label>
 <select id="editStatus">
@@ -411,6 +419,16 @@ editButton.addEventListener("click", () => {
 
   const editCatchcopy =
     document.getElementById("editCatchcopy");
+  
+  const editDescription =
+  document.getElementById("editDescription");
+
+const editAddress =
+  document.getElementById("editAddress");
+
+const editHours =
+  document.getElementById("editHours"); 
+  
   const editStatus =
   document.getElementById("editStatus");
 
@@ -423,7 +441,16 @@ const editEnabled =
 
   editCatchcopy.value =
     shop.content?.ja?.catchcopy || "";
-editStatus.value =
+  editDescription.value =
+  shop.content?.ja?.description || "";
+
+editAddress.value =
+  shop.content?.ja?.address || "";
+
+editHours.value =
+  shop.content?.ja?.hours || "";
+  
+  editStatus.value =
   shop.status || "draft";
 
 editEnabled.checked =
@@ -450,7 +477,15 @@ item.appendChild(editButton);
 
     const editCatchcopy =
       document.getElementById("editCatchcopy");
-const editStatus =
+    const editDescription =
+  document.getElementById("editDescription");
+
+const editAddress =
+  document.getElementById("editAddress");
+
+const editHours =
+  document.getElementById("editHours");
+    const editStatus =
   document.getElementById("editStatus");
 
 const editEnabled =
@@ -461,6 +496,14 @@ const editEnabled =
     const shopId = editForm.dataset.shopId;
     const name = editName.value.trim();
     const catchcopy = editCatchcopy.value.trim();
+    const description =
+  editDescription.value.trim();
+
+const address =
+  editAddress.value.trim();
+
+const hours =
+  editHours.value.trim();
     const status = editStatus.value;
 const enabled = editEnabled.checked;
     
@@ -495,12 +538,15 @@ const enabled = editEnabled.checked;
         ...(shop.content || {})
       };
 
-      updatedContent.ja = {
-        ...(updatedContent.ja || {}),
-        name: name,
-        catchcopy: catchcopy
-      };
-
+     updatedContent.ja = {
+  ...(updatedContent.ja || {}),
+  name: name,
+  catchcopy: catchcopy,
+  description: description,
+  address: address,
+  hours: hours
+};
+      
       const { error: updateError } =
         await supabase
           .from("shops")
