@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>広告効果レポート</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./config.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #f5f3ee;
+      color: #202020;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Hiragino Sans",
+        "Yu Gothic",
+        sans-serif;
+    }
+
+    header {
+      padding: 28px 20px;
+      background: #183f42;
+      color: white;
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+
+    header p {
+      margin: 0;
+      opacity: 0.9;
+    }
+
+    main {
+      width: min(1200px, calc(100% - 24px));
+      margin: 20px auto 60px;
+    }
+
+    .panel {
+      margin-bottom: 18px;
+      padding: 20px;
+      border: 1px solid #ddd4c6;
+      border-radius: 18px;
+      background: white;
+    }
+
+    .panel h2 {
+      margin-top: 0;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns:
+        repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      align-items: end;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    button {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 12px;
+      border: 1px solid #d8d0c3;
+      border-radius: 10px;
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      background: #17676c;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #eae6df;
+      color: #222;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .status {
+      margin: 0;
+      line-height: 1.7;
+    }
+
+    .error {
+      color: #b00020;
+      font-weight: 700;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns:
+        repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      padding: 18px;
+      border: 1px solid #ddd4c6;
+      border-radius: 16px;
+      background: white;
+    }
+
+    .card-label {
+      margin-bottom: 8px;
+      color: #666;
+      font-weight: 700;
+    }
+
+    .card-value {
+      font-size: 32px;
+      font-weight: 800;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 980px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 13px 10px;
+      border-bottom: 1px solid #e5dfd5;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+
+    th {
+      background: #faf8f4;
+      font-size: 14px;
+    }
+
+    tbody tr:hover {
+      background: #faf8f4;
+    }
+
+    .empty {
+      padding: 32px 12px;
+      color: #666;
+      text-align: center;
+    }
+
+    .top-links {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .top-links a {
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: #eae6df;
+      color: #222;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 24px;
+      }
+
+      main {
+        width: min(100% - 16px, 1200px);
+      }
+
+      .panel {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>広告効果レポート</h1>
+    <p>
+      店舗別・ホテル別・QR別の反応を一括で確認します。
+    </p>
+  </header>
+
+  <main>
+    <div class="top-links">
+      <a href="./admin.html">管理画面へ戻る</a>
+    </div>
+
+    <section class="panel">
+      <p id="status" class="status">
+        管理者情報を確認しています...
+      </p>
+    </section>
+
+    <section id="reportContent" hidden>
+      <section class="panel">
+        <h2>絞り込み</h2>
+
+        <div class="toolbar">
+          <div>
+            <label for="startDate">開始日</label>
+            <input id="startDate" type="date">
+          </div>
+
+          <div>
+            <label for="endDate">終了日</label>
+            <input id="endDate" type="date">
+          </div>
+
+          <div>
+            <label for="hotelFilter">ホテル</label>
+            <select id="hotelFilter">
+              <option value="">すべて</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="shopFilter">店舗</label>
+            <select id="shopFilter">
+              <option value="">すべて</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="qrFilter">QRコード</label>
+            <select id="qrFilter">
+              <option value="">すべて</option>
+            </select>
+          </div>
+
+          <div>
+            <button id="refreshButton" type="button">
+              更新
+            </button>
+          </div>
+
+          <div>
+            <button
+              id="clearButton"
+              type="button"
+              class="secondary"
+            >
+              絞り込み解除
+            </button>
+          </div>
+
+          <div>
+            <button id="csvButton" type="button">
+              CSV出力
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="cards">
+        <div class="card">
+          <div class="card-label">QR読取</div>
+          <div id="totalQrScan" class="card-value">0</div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">ページ閲覧</div>
+          <div id="totalPageView" class="card-value">0</div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">予約クリック</div>
+          <div id="totalReservation" class="card-value">0</div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">全導線クリック</div>
+          <div id="totalClicks" class="card-value">0</div>
+        </div>
+      </section>
+
+      <section class="panel" style="margin-top:18px;">
+        <h2>店舗別集計</h2>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>店舗名</th>
+                <th>QR読取</th>
+                <th>ページ閲覧</th>
+                <th>予約</th>
+                <th>地図</th>
+                <th>Instagram</th>
+                <th>公式サイト</th>
+                <th>電話</th>
+                <th>クーポン</th>
+                <th>全クリック</th>
+              </tr>
+            </thead>
+
+            <tbody id="shopTableBody"></tbody>
+          </table>
+
+          <div id="emptyMessage" class="empty" hidden>
+            条件に一致するデータがありません。
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const statusEl =
+      document.getElementById("status");
+
+    const reportContent =
+      document.getElementById("reportContent");
+
+    const state = {
+      events: [],
+      shops: [],
+      filteredEvents: [],
+      rows: []
+    };
+
+    const config =
+      window.APP_CONFIG ||
+      window.SUPABASE_CONFIG ||
+      window.CONFIG ||
+      {};
+
+    const supabaseUrl =
+      config.supabaseUrl ||
+      config.url ||
+      config.SUPABASE_URL ||
+      (
+        typeof SUPABASE_URL !== "undefined"
+          ? SUPABASE_URL
+          : window.SUPABASE_URL
+      );
+
+    const supabaseAnonKey =
+      config.supabaseAnonKey ||
+      config.anonKey ||
+      config.key ||
+      config.SUPABASE_ANON_KEY ||
+      (
+        typeof SUPABASE_ANON_KEY !== "undefined"
+          ? SUPABASE_ANON_KEY
+          : window.SUPABASE_ANON_KEY
+      );
+
+    let db = null;
+
+    if(
+      supabaseUrl &&
+      supabaseAnonKey &&
+      window.supabase
+    ){
+      db = window.supabase.createClient(
+        supabaseUrl,
+        supabaseAnonKey
+      );
+    }
+
+    function normalizeEventType(eventType){
+      const aliases = {
+        reservation: "reservation_click",
+        map: "map_click",
+        instagram: "instagram_click",
+        website: "website_click",
+        phone: "phone_click",
+        coupon: "coupon_click",
+        coupon_view: "coupon_click"
+      };
+
+      return aliases[eventType] || eventType;
+    }
+
+    function getShopName(shopId, event){
+      const shop =
+        state.shops.find(item => item.id === shopId);
+
+      return (
+        shop?.content?.ja?.name ||
+        event?.shop_name ||
+        shopId ||
+        "不明な店舗"
+      );
+    }
+
+    function setStatus(message, isError = false){
+      statusEl.textContent = message;
+      statusEl.classList.toggle("error", isError);
+    }
+
+    async function verifyAdmin(){
+      if(!db){
+        setStatus(
+          "Supabase設定を読み込めませんでした。config.jsを確認してください。",
+          true
+        );
+
+        return false;
+      }
+
+      const {
+        data: sessionData,
+        error: sessionError
+      } = await db.auth.getSession();
+
+      if(
+        sessionError ||
+        !sessionData.session
+      ){
+        setStatus(
+          "管理者としてログインしていません。先に管理画面からログインしてください。",
+          true
+        );
+
+        return false;
+      }
+
+      const {
+        data: isAdmin,
+        error: adminError
+      } = await db.rpc("is_admin");
+
+      if(adminError){
+        console.error(adminError);
+
+        setStatus(
+          `管理者確認に失敗しました：${adminError.message}`,
+          true
+        );
+
+        return false;
+      }
+
+      if(!isAdmin){
+        setStatus(
+          "このアカウントには計測データを見る権限がありません。",
+          true
+        );
+
+        return false;
+      }
+
+      return true;
+    }
+
+    async function loadData(){
+      setStatus("計測データを読み込んでいます...");
+
+      const [
+        shopsResult,
+        eventsResult
+      ] = await Promise.all([
+        db
+          .from("shops")
+          .select("id,content"),
+
+        db
+          .from("events")
+          .select("*")
+          .order("created_at", {
+            ascending: false
+          })
+          .limit(10000)
+      ]);
+
+      if(shopsResult.error){
+        throw shopsResult.error;
+      }
+
+      if(eventsResult.error){
+        throw eventsResult.error;
+      }
+
+      state.shops =
+        shopsResult.data || [];
+
+      state.events =
+        (eventsResult.data || []).map(event => ({
+          ...event,
+          normalized_event_type:
+            normalizeEventType(event.event_type)
+        }));
+
+      populateFilters();
+      applyFilters();
+
+      setStatus(
+        `${state.events.length}件の計測データを読み込みました。`
+      );
+
+      reportContent.hidden = false;
+    }
+
+    function uniqueValues(values){
+      return [
+        ...new Set(
+          values.filter(value => value)
+        )
+      ].sort((a, b) =>
+        String(a).localeCompare(
+          String(b),
+          "ja"
+        )
+      );
+    }
+
+    function addOptions(
+      selectElement,
+      values,
+      labelFunction
+    ){
+      const currentValue =
+        selectElement.value;
+
+      selectElement.innerHTML =
+        '<option value="">すべて</option>';
+
+      values.forEach(value => {
+        const option =
+          document.createElement("option");
+
+        option.value = value;
+        option.textContent =
+          labelFunction
+            ? labelFunction(value)
+            : value;
+
+        selectElement.appendChild(option);
+      });
+
+      selectElement.value = currentValue;
+    }
+
+    function populateFilters(){
+      const hotelFilter =
+        document.getElementById("hotelFilter");
+
+      const shopFilter =
+        document.getElementById("shopFilter");
+
+      const qrFilter =
+        document.getElementById("qrFilter");
+
+      const hotels =
+        uniqueValues(
+          state.events.map(event =>
+            event.hotel_id
+          )
+        );
+
+      const shops =
+        uniqueValues(
+          state.events.map(event =>
+            event.shop_id
+          )
+        );
+
+      const qrCodes =
+        uniqueValues(
+          state.events.map(event =>
+            event.qr_id ||
+            event.qr_code
+          )
+        );
+
+      addOptions(
+        hotelFilter,
+        hotels,
+        hotelId => {
+          const event =
+            state.events.find(item =>
+              item.hotel_id === hotelId
+            );
+
+          return event?.hotel_name
+            ? `${event.hotel_name}（${hotelId}）`
+            : hotelId;
+        }
+      );
+
+      addOptions(
+        shopFilter,
+        shops,
+        shopId =>
+          `${getShopName(shopId)}（${shopId}）`
+      );
+
+      addOptions(
+        qrFilter,
+        qrCodes
+      );
+    }
+
+    function eventMatchesDate(
+      event,
+      startDate,
+      endDate
+    ){
+      const createdAt =
+        new Date(event.created_at);
+
+      if(startDate){
+        const start =
+          new Date(`${startDate}T00:00:00`);
+
+        if(createdAt < start){
+          return false;
+        }
+      }
+
+      if(endDate){
+        const end =
+          new Date(`${endDate}T23:59:59.999`);
+
+        if(createdAt > end){
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    function applyFilters(){
+      const startDate =
+        document.getElementById(
+          "startDate"
+        ).value;
+
+      const endDate =
+        document.getElementById(
+          "endDate"
+        ).value;
+
+      const hotelId =
+        document.getElementById(
+          "hotelFilter"
+        ).value;
+
+      const shopId =
+        document.getElementById(
+          "shopFilter"
+        ).value;
+
+      const qrCode =
+        document.getElementById(
+          "qrFilter"
+        ).value;
+
+      state.filteredEvents =
+        state.events.filter(event => {
+          if(
+            !eventMatchesDate(
+              event,
+              startDate,
+              endDate
+            )
+          ){
+            return false;
+          }
+
+          if(
+            hotelId &&
+            event.hotel_id !== hotelId
+          ){
+            return false;
+          }
+
+          if(
+            shopId &&
+            event.shop_id !== shopId
+          ){
+            return false;
+          }
+
+          const eventQrCode =
+            event.qr_id ||
+            event.qr_code ||
+            "";
+
+          if(
+            qrCode &&
+            eventQrCode !== qrCode
+          ){
+            return false;
+          }
+
+          return true;
+        });
+
+      createRows();
+      renderSummary();
+      renderTable();
+    }
+
+    function createEmptyCounts(){
+      return {
+        qr_scan: 0,
+        page_view: 0,
+        reservation_click: 0,
+        map_click: 0,
+        instagram_click: 0,
+        website_click: 0,
+        phone_click: 0,
+        coupon_click: 0
+      };
+    }
+
+    function createRows(){
+      const map = new Map();
+
+      state.filteredEvents.forEach(event => {
+        const shopId =
+          event.shop_id || "unknown";
+
+        if(!map.has(shopId)){
+          map.set(shopId, {
+            shop_id: shopId,
+            shop_name:
+              getShopName(shopId, event),
+            counts: createEmptyCounts()
+          });
+        }
+
+        const row =
+          map.get(shopId);
+
+        const eventType =
+          event.normalized_event_type;
+
+        if(
+          Object.prototype.hasOwnProperty.call(
+            row.counts,
+            eventType
+          )
+        ){
+          row.counts[eventType] += 1;
+        }
+      });
+
+      state.rows =
+        [...map.values()].sort((a, b) => {
+          const scanDifference =
+            b.counts.qr_scan -
+            a.counts.qr_scan;
+
+          if(scanDifference !== 0){
+            return scanDifference;
+          }
+
+          return a.shop_name.localeCompare(
+            b.shop_name,
+            "ja"
+          );
+        });
+    }
+
+    function countEvents(eventType){
+      return state.filteredEvents.filter(
+        event =>
+          event.normalized_event_type ===
+          eventType
+      ).length;
+    }
+
+    function renderSummary(){
+      const qrScan =
+        countEvents("qr_scan");
+
+      const pageView =
+        countEvents("page_view");
+
+      const reservation =
+        countEvents("reservation_click");
+
+      const clickTypes = [
+        "reservation_click",
+        "map_click",
+        "instagram_click",
+        "website_click",
+        "phone_click",
+        "coupon_click"
+      ];
+
+      const totalClicks =
+        state.filteredEvents.filter(event =>
+          clickTypes.includes(
+            event.normalized_event_type
+          )
+        ).length;
+
+      document.getElementById(
+        "totalQrScan"
+      ).textContent = qrScan;
+
+      document.getElementById(
+        "totalPageView"
+      ).textContent = pageView;
+
+      document.getElementById(
+        "totalReservation"
+      ).textContent = reservation;
+
+      document.getElementById(
+        "totalClicks"
+      ).textContent = totalClicks;
+    }
+
+    function appendCell(rowElement, value){
+      const cell =
+        document.createElement("td");
+
+      cell.textContent = String(value);
+      rowElement.appendChild(cell);
+    }
+
+    function renderTable(){
+      const tableBody =
+        document.getElementById(
+          "shopTableBody"
+        );
+
+      const emptyMessage =
+        document.getElementById(
+          "emptyMessage"
+        );
+
+      tableBody.replaceChildren();
+
+      if(state.rows.length === 0){
+        emptyMessage.hidden = false;
+        return;
+      }
+
+      emptyMessage.hidden = true;
+
+      state.rows.forEach(row => {
+        const tr =
+          document.createElement("tr");
+
+        const totalClicks =
+          row.counts.reservation_click +
+          row.counts.map_click +
+          row.counts.instagram_click +
+          row.counts.website_click +
+          row.counts.phone_click +
+          row.counts.coupon_click;
+
+        appendCell(tr, row.shop_name);
+        appendCell(tr, row.counts.qr_scan);
+        appendCell(tr, row.counts.page_view);
+        appendCell(
+          tr,
+          row.counts.reservation_click
+        );
+        appendCell(tr, row.counts.map_click);
+        appendCell(
+          tr,
+          row.counts.instagram_click
+        );
+        appendCell(
+          tr,
+          row.counts.website_click
+        );
+        appendCell(
+          tr,
+          row.counts.phone_click
+        );
+        appendCell(
+          tr,
+          row.counts.coupon_click
+        );
+        appendCell(tr, totalClicks);
+
+        tableBody.appendChild(tr);
+      });
+    }
+
+    function escapeCsv(value){
+      const text =
+        String(value ?? "");
+
+      return `"${text.replaceAll('"', '""')}"`;
+    }
+
+    function downloadCsv(){
+      const headers = [
+        "店舗ID",
+        "店舗名",
+        "QR読取",
+        "ページ閲覧",
+        "予約クリック",
+        "地図クリック",
+        "Instagramクリック",
+        "公式サイトクリック",
+        "電話クリック",
+        "クーポンクリック",
+        "全クリック"
+      ];
+
+      const lines = [
+        headers.map(escapeCsv).join(",")
+      ];
+
+      state.rows.forEach(row => {
+        const totalClicks =
+          row.counts.reservation_click +
+          row.counts.map_click +
+          row.counts.instagram_click +
+          row.counts.website_click +
+          row.counts.phone_click +
+          row.counts.coupon_click;
+
+        const values = [
+          row.shop_id,
+          row.shop_name,
+          row.counts.qr_scan,
+          row.counts.page_view,
+          row.counts.reservation_click,
+          row.counts.map_click,
+          row.counts.instagram_click,
+          row.counts.website_click,
+          row.counts.phone_click,
+          row.counts.coupon_click,
+          totalClicks
+        ];
+
+        lines.push(
+          values.map(escapeCsv).join(",")
+        );
+      });
+
+      const blob =
+        new Blob(
+          [
+            "\uFEFF" +
+            lines.join("\n")
+          ],
+          {
+            type:
+              "text/csv;charset=utf-8"
+          }
+        );
+
+      const url =
+        URL.createObjectURL(blob);
+
+      const anchor =
+        document.createElement("a");
+
+      anchor.href = url;
+
+      anchor.download =
+        `広告効果レポート_${
+          new Date()
+            .toISOString()
+            .slice(0, 10)
+        }.csv`;
+
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+
+      URL.revokeObjectURL(url);
+    }
+
+    document
+      .getElementById("refreshButton")
+      .addEventListener(
+        "click",
+        async () => {
+          const button =
+            document.getElementById(
+              "refreshButton"
+            );
+
+          button.disabled = true;
+          button.textContent = "更新中...";
+
+          try{
+            await loadData();
+          }catch(error){
+            console.error(error);
+
+            setStatus(
+              `読み込みに失敗しました：${error.message}`,
+              true
+            );
+          }finally{
+            button.disabled = false;
+            button.textContent = "更新";
+          }
+        }
+      );
+
+    document
+      .getElementById("clearButton")
+      .addEventListener(
+        "click",
+        () => {
+          document.getElementById(
+            "startDate"
+          ).value = "";
+
+          document.getElementById(
+            "endDate"
+          ).value = "";
+
+          document.getElementById(
+            "hotelFilter"
+          ).value = "";
+
+          document.getElementById(
+            "shopFilter"
+          ).value = "";
+
+          document.getElementById(
+            "qrFilter"
+          ).value = "";
+
+          applyFilters();
+        }
+      );
+
+    document
+      .getElementById("csvButton")
+      .addEventListener(
+        "click",
+        downloadCsv
+      );
+
+    [
+      "startDate",
+      "endDate",
+      "hotelFilter",
+      "shopFilter",
+      "qrFilter"
+    ].forEach(id => {
+      document
+        .getElementById(id)
+        .addEventListener(
+          "change",
+          applyFilters
+        );
+    });
+
+    async function initialize(){
+      try{
+        const authorized =
+          await verifyAdmin();
+
+        if(!authorized){
+          return;
+        }
+
+        await loadData();
+      }catch(error){
+        console.error(error);
+
+        setStatus(
+          `初期化に失敗しました：${error.message}`,
+          true
+        );
+      }
+    }
+
+    initialize();
+  </script>
+</body>
+</html>
