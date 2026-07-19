@@ -838,7 +838,7 @@ const qrId =
 const debugMode =
   params.get("debug") === "1";
 
-const baseShop = shops[shopId];
+const fallbackShop = shops[shopId];
 const hotel = hotels[hotelId] || {};
 
 const statusEl =
