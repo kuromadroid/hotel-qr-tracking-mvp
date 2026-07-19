@@ -367,7 +367,18 @@ async function loadShops(){
         `有効：${shop.enabled ? "はい" : "いいえ"}`
       )
     );
+item.appendChild(document.createElement("br"));
 
+const editButton = document.createElement("button");
+editButton.type = "button";
+editButton.textContent = "編集";
+editButton.style.marginTop = "12px";
+
+editButton.addEventListener("click", () => {
+  alert(`${name}を編集します`);
+});
+
+item.appendChild(editButton);
     shopList.appendChild(item);
   });
 }
