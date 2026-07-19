@@ -223,10 +223,11 @@
       </button>
     </div>
 
-    <div class="placeholder">
-      管理者認証に成功しました。<br>
-      次の段階で、店舗一覧と編集フォームをここへ追加します。
-    </div>
+   <div class="placeholder" id="shopListStatus">
+  店舗情報を読み込んでいます...
+</div>
+
+<div id="shopList"></div>
   </section>
 </main>
 
@@ -293,9 +294,84 @@ function showAdmin(user){
 
   userInfo.textContent =
     `ログイン中：${user.email || user.id}`;
+  loadShops();
 }
+async function loadShops(){
+  const status =
+    document.getElementById("shopListStatus");
 
-async function verifyAdmin(){
+  const shopList =
+    document.getElementById("shopList");
+
+  status.hidden = false;
+  status.classList.remove("error");
+  status.textContent =
+    "店舗情報を読み込んでいます...";
+
+  shopList.innerHTML = "";
+
+  const { data, error } = await supabase
+    .from("shops")
+    .select("id,status,enabled,content,updated_at")
+    .order("updated_at", {
+      ascending: false
+    });
+
+  if(error){
+    console.error(error);
+
+    status.textContent =
+      `店舗情報の取得に失敗しました：${error.message}`;
+
+    status.classList.add("error");
+    return;
+  }
+
+  if(!data || data.length === 0){
+    status.textContent =
+      "登録されている店舗はありません。";
+    return;
+  }
+
+  status.hidden = true;
+
+  data.forEach(shop => {
+    const item =
+      document.createElement("div");
+
+    item.className = "placeholder";
+    item.style.marginTop = "12px";
+
+    const name =
+      shop.content?.ja?.name ||
+      shop.content?.en?.name ||
+      shop.id;
+
+    const title =
+      document.createElement("strong");
+
+    title.textContent = name;
+
+    item.appendChild(title);
+    item.appendChild(document.createElement("br"));
+    item.appendChild(
+      document.createTextNode(`店舗ID：${shop.id}`)
+    );
+    item.appendChild(document.createElement("br"));
+    item.appendChild(
+      document.createTextNode(`公開状態：${shop.status}`)
+    );
+    item.appendChild(document.createElement("br"));
+    item.appendChild(
+      document.createTextNode(
+        `有効：${shop.enabled ? "はい" : "いいえ"}`
+      )
+    );
+
+    shopList.appendChild(item);
+  });
+}
+  async function verifyAdmin(){
   const {
     data: userData,
     error: userError
