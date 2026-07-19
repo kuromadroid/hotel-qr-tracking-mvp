@@ -420,6 +420,100 @@ item.appendChild(editButton);
     shopList.appendChild(item);
   });
 }
+  document
+  .getElementById("saveShopButton")
+  .addEventListener("click", async () => {
+    const editForm =
+      document.getElementById("editForm");
+
+    const editName =
+      document.getElementById("editName");
+
+    const editCatchcopy =
+      document.getElementById("editCatchcopy");
+
+    const saveButton =
+      document.getElementById("saveShopButton");
+
+    const shopId = editForm.dataset.shopId;
+    const name = editName.value.trim();
+    const catchcopy = editCatchcopy.value.trim();
+
+    if(!shopId){
+      alert("編集する店舗が選択されていません。");
+      return;
+    }
+
+    if(!name){
+      alert("店舗名を入力してください。");
+      return;
+    }
+
+    saveButton.disabled = true;
+    saveButton.textContent = "保存中...";
+
+    try{
+      const {
+        data: shop,
+        error: readError
+      } = await supabase
+        .from("shops")
+        .select("content")
+        .eq("id", shopId)
+        .single();
+
+      if(readError){
+        throw readError;
+      }
+
+      const updatedContent = {
+        ...(shop.content || {})
+      };
+
+      updatedContent.ja = {
+        ...(updatedContent.ja || {}),
+        name: name,
+        catchcopy: catchcopy
+      };
+
+      const { error: updateError } =
+        await supabase
+          .from("shops")
+          .update({
+            content: updatedContent
+          })
+          .eq("id", shopId);
+
+      if(updateError){
+        throw updateError;
+      }
+
+      alert("店舗情報を保存しました。");
+
+      editForm.hidden = true;
+
+      await loadShops();
+    }catch(error){
+      console.error(error);
+
+      alert(
+        `保存に失敗しました：${error.message}`
+      );
+    }finally{
+      saveButton.disabled = false;
+      saveButton.textContent = "保存";
+    }
+  });
+
+document
+  .getElementById("cancelEditButton")
+  .addEventListener("click", () => {
+    const editForm =
+      document.getElementById("editForm");
+
+    editForm.hidden = true;
+    editForm.dataset.shopId = "";
+  });
   async function verifyAdmin(){
   const {
     data: userData,
