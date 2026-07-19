@@ -1275,7 +1275,7 @@ async function moveToUrl(eventType, url, ctx){
     buildInternalUrl(url, ctx);
 }
 
-function initialize(){
+async function initialize(){
   setText("pageTitle", ui.pageTitle);
   setText("pageSubtitle", ui.pageSubtitle);
 
@@ -1285,6 +1285,17 @@ function initialize(){
   setText("hoursLabel", ui.hours);
   setText("closedLabel", ui.closed);
 
+    const databaseShop =
+    await fetchShopFromSupabase();
+
+  const baseShop =
+    databaseShop ||
+    fallbackShop;
+
+  const shopSource =
+    databaseShop
+      ? "Supabase"
+      : "data.js";
   if(!baseShop || baseShop.enabled === false){
     showError(`${ui.notFound} shop=${shopId}`);
     return;
