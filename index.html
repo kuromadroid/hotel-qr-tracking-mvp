@@ -875,6 +875,9 @@ const supabase =
       hotel_overrides
     `)
     .eq("id", shopId)
+
+.eq("status", "published")
+.eq("enabled", true)    
     .maybeSingle();
 
   if(error){
@@ -1275,8 +1278,105 @@ async function moveToUrl(eventType, url, ctx){
   location.href =
     buildInternalUrl(url, ctx);
 }
+async function resolveQrRoute(){
+  const params =
+    new URLSearchParams(window.location.search);
 
-async function initialize(){
+  const qrCode =
+    (params.get("qr") || "")
+      .trim()
+      .toLowerCase();
+
+  // QRなしの直接アクセスは、
+  // 現在のテスト用動作を残す
+  if(!qrCode){
+    return "direct";
+  }
+
+  const {
+    data,
+    error
+  } = await supabase
+    .from("qr_routes")
+    .select(
+      "qr_code,hotel_id,shop_id,slot,edition,enabled"
+    )
+    .eq("qr_code", qrCode)
+    .eq("enabled", true)
+    .maybeSingle();
+
+  if(error){
+    console.error(
+      "QRルートの取得に失敗しました：",
+      error
+    );
+
+    throw error;
+  }
+
+  if(!data){
+    return "invalid";
+  }
+
+  // URL内のhotelやshopを信用せず、
+  // Supabaseの登録内容に直す
+  const canonicalUrl =
+    new URL(window.location.href);
+
+  canonicalUrl.searchParams.set(
+    "hotel",
+    data.hotel_id
+  );
+
+  canonicalUrl.searchParams.set(
+    "shop",
+    data.shop_id
+  );
+
+  canonicalUrl.searchParams.set(
+    "slot",
+    data.slot
+  );
+
+  canonicalUrl.searchParams.set(
+    "edition",
+    data.edition
+  );
+
+  canonicalUrl.searchParams.set(
+    "qr",
+    data.qr_code
+  );
+
+  if(
+    canonicalUrl.toString() !==
+    window.location.href
+  ){
+    window.location.replace(
+      canonicalUrl.toString()
+    );
+
+    return "redirecting";
+  }
+
+  return "resolved";
+}
+  async function initialize(){
+  const qrResolution =
+    await resolveQrRoute();
+
+  if(qrResolution === "redirecting"){
+    return;
+  }
+
+  if(qrResolution === "invalid"){
+    showError(
+      "このQRコードは無効、または現在利用できません。"
+    );
+
+    return;
+  }
+    
   setText("pageTitle", ui.pageTitle);
   setText("pageSubtitle", ui.pageSubtitle);
 
@@ -1286,18 +1386,37 @@ async function initialize(){
   setText("hoursLabel", ui.hours);
   setText("closedLabel", ui.closed);
 
-    const databaseShop =
-    await fetchShopFromSupabase();
+const databaseShop =
+  await fetchShopFromSupabase();
 
-  const baseShop =
-    databaseShop ||
-    fallbackShop;
+const hasQr =
+  new URLSearchParams(
+    window.location.search
+  ).has("qr");
 
-  const shopSource =
-    databaseShop
-      ? "Supabase"
-      : "data.js";
-  if(!baseShop || baseShop.enabled === false){
+const baseShop =
+  databaseShop ||
+  (!hasQr ? fallbackShop : null);
+
+const shopSource =
+  databaseShop
+    ? "Supabase"
+    : (
+        !hasQr && fallbackShop
+          ? "data.js"
+          : "未取得"
+      );
+
+if(!baseShop){
+  showError(
+    hasQr
+      ? "この店舗は現在公開されていません。"
+      : "店舗情報が見つかりません。"
+  );
+
+  return;
+}
+    if(!baseShop || baseShop.enabled === false){
     showError(`${ui.notFound} shop=${shopId}`);
     return;
   }
