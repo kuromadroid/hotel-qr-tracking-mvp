@@ -857,7 +857,51 @@ const supabase =
   isConfigured
     ? createClient(cfg.url, cfg.anonKey)
     : null;
+  async function fetchShopFromSupabase(){
+  if(!supabase){
+    return null;
+  }
 
+  const { data, error } = await supabase
+    .from("shops")
+    .select(`
+      id,
+      status,
+      enabled,
+      media,
+      content,
+      actions,
+      coupon,
+      hotel_overrides
+    `)
+    .eq("id", shopId)
+    .maybeSingle();
+
+  if(error){
+    console.error(
+      "店舗情報の取得に失敗しました：",
+      error
+    );
+
+    return null;
+  }
+
+  if(!data){
+    return null;
+  }
+
+  return {
+    enabled: data.enabled,
+    media: data.media || {
+      hero: "",
+      gallery: []
+    },
+    content: data.content || {},
+    actions: data.actions || {},
+    coupon: data.coupon || {},
+    hotelOverrides: data.hotel_overrides || {}
+  };
+}
 function getLocalizedValue(values, language = currentLang){
   if(!values){
     return "";
