@@ -236,8 +236,19 @@
 
   <label for="editCatchcopy">キャッチコピー</label>
   <input id="editCatchcopy" type="text">
+      
+<label for="editStatus">公開状態</label>
+<select id="editStatus">
+  <option value="draft">下書き</option>
+  <option value="published">公開</option>
+  <option value="suspended">停止</option>
+</select>
 
-  <button id="saveShopButton" type="button">
+<label>
+  <input id="editEnabled" type="checkbox">
+  店舗ページを有効にする
+</label>
+      <button id="saveShopButton" type="button">
     保存
   </button>
 
@@ -400,7 +411,11 @@ editButton.addEventListener("click", () => {
 
   const editCatchcopy =
     document.getElementById("editCatchcopy");
+  const editStatus =
+  document.getElementById("editStatus");
 
+const editEnabled =
+  document.getElementById("editEnabled");
   editForm.dataset.shopId = shop.id;
 
   editName.value =
@@ -408,7 +423,11 @@ editButton.addEventListener("click", () => {
 
   editCatchcopy.value =
     shop.content?.ja?.catchcopy || "";
+editStatus.value =
+  shop.status || "draft";
 
+editEnabled.checked =
+  shop.enabled === true;
   editForm.hidden = false;
 
   editForm.scrollIntoView({
@@ -431,14 +450,20 @@ item.appendChild(editButton);
 
     const editCatchcopy =
       document.getElementById("editCatchcopy");
+const editStatus =
+  document.getElementById("editStatus");
 
+const editEnabled =
+  document.getElementById("editEnabled");
     const saveButton =
       document.getElementById("saveShopButton");
 
     const shopId = editForm.dataset.shopId;
     const name = editName.value.trim();
     const catchcopy = editCatchcopy.value.trim();
-
+    const status = editStatus.value;
+const enabled = editEnabled.checked;
+    
     if(!shopId){
       alert("編集する店舗が選択されていません。");
       return;
@@ -479,10 +504,12 @@ item.appendChild(editButton);
       const { error: updateError } =
         await supabase
           .from("shops")
-          .update({
-            content: updatedContent
-          })
-          .eq("id", shopId);
+         .update({
+  content: updatedContent,
+  status: status,
+  enabled: enabled
+})
+        .eq("id", shopId);
 
       if(updateError){
         throw updateError;
