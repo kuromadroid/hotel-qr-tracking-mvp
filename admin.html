@@ -244,6 +244,60 @@
 
 <label for="editHours">営業時間</label>
 <input id="editHours" type="text">
+<h3>予約</h3>
+
+<label for="editReservationUrl">予約ページURL</label>
+<input id="editReservationUrl" type="text">
+
+<label for="editReservationEnabled">予約ボタン</label>
+<select id="editReservationEnabled">
+  <option value="true">表示する</option>
+  <option value="false">表示しない</option>
+</select>
+
+<h3>地図</h3>
+
+<label for="editMapUrl">地図URL</label>
+<input id="editMapUrl" type="text">
+
+<label for="editMapEnabled">地図ボタン</label>
+<select id="editMapEnabled">
+  <option value="true">表示する</option>
+  <option value="false">表示しない</option>
+</select>
+
+<h3>Instagram</h3>
+
+<label for="editInstagramUrl">Instagram URL</label>
+<input id="editInstagramUrl" type="text">
+
+<label for="editInstagramEnabled">Instagramボタン</label>
+<select id="editInstagramEnabled">
+  <option value="true">表示する</option>
+  <option value="false">表示しない</option>
+</select>
+
+<h3>公式サイト</h3>
+
+<label for="editWebsiteUrl">公式サイトURL</label>
+<input id="editWebsiteUrl" type="text">
+
+<label for="editWebsiteEnabled">公式サイトボタン</label>
+<select id="editWebsiteEnabled">
+  <option value="true">表示する</option>
+  <option value="false">表示しない</option>
+</select>
+
+<h3>電話</h3>
+
+<label for="editPhoneValue">電話番号</label>
+<input id="editPhoneValue" type="text">
+
+<label for="editPhoneEnabled">電話ボタン</label>
+<select id="editPhoneEnabled">
+  <option value="true">表示する</option>
+  <option value="false">表示しない</option>
+</select>
       
 <label for="editStatus">公開状態</label>
 <select id="editStatus">
@@ -348,7 +402,7 @@ async function loadShops(){
 
   const { data, error } = await supabase
     .from("shops")
-    .select("id,status,enabled,content,updated_at")
+    .select("id,status,enabled,content,actions,updated_at")
     .order("updated_at", {
       ascending: false
     });
@@ -449,7 +503,35 @@ editAddress.value =
 
 editHours.value =
   shop.content?.ja?.hours || "";
-  
+  document.getElementById("editReservationUrl").value =
+  shop.actions?.reservation?.url || "";
+
+document.getElementById("editReservationEnabled").value =
+  String(shop.actions?.reservation?.enabled === true);
+
+document.getElementById("editMapUrl").value =
+  shop.actions?.map?.url || "";
+
+document.getElementById("editMapEnabled").value =
+  String(shop.actions?.map?.enabled === true);
+
+document.getElementById("editInstagramUrl").value =
+  shop.actions?.instagram?.url || "";
+
+document.getElementById("editInstagramEnabled").value =
+  String(shop.actions?.instagram?.enabled === true);
+
+document.getElementById("editWebsiteUrl").value =
+  shop.actions?.website?.url || "";
+
+document.getElementById("editWebsiteEnabled").value =
+  String(shop.actions?.website?.enabled === true);
+
+document.getElementById("editPhoneValue").value =
+  shop.actions?.phone?.value || "";
+
+document.getElementById("editPhoneEnabled").value =
+  String(shop.actions?.phone?.enabled === true);
   editStatus.value =
   shop.status || "draft";
 
@@ -503,7 +585,60 @@ const address =
   editAddress.value.trim();
 
 const hours =
-  editHours.value.trim();
+  editHours.value.trim();const reservationUrl =
+  document.getElementById("editReservationUrl").value.trim();
+
+const reservationEnabled =
+  document.getElementById("editReservationEnabled").value === "true";
+
+const mapUrl =
+  document.getElementById("editMapUrl").value.trim();
+
+const mapEnabled =
+  document.getElementById("editMapEnabled").value === "true";
+
+const instagramUrl =
+  document.getElementById("editInstagramUrl").value.trim();
+
+const instagramEnabled =
+  document.getElementById("editInstagramEnabled").value === "true";
+
+const websiteUrl =
+  document.getElementById("editWebsiteUrl").value.trim();
+
+const websiteEnabled =
+  document.getElementById("editWebsiteEnabled").value === "true";
+
+const phoneValue =
+  document.getElementById("editPhoneValue").value.trim();
+
+const phoneEnabled =
+  document.getElementById("editPhoneEnabled").value === "true";
+if(reservationEnabled && !reservationUrl){
+  alert("予約ボタンを表示する場合はURLを入力してください。");
+  return;
+}
+
+if(mapEnabled && !mapUrl){
+  alert("地図ボタンを表示する場合はURLを入力してください。");
+  return;
+}
+
+if(instagramEnabled && !instagramUrl){
+  alert("Instagramボタンを表示する場合はURLを入力してください。");
+  return;
+}
+
+if(websiteEnabled && !websiteUrl){
+  alert("公式サイトボタンを表示する場合はURLを入力してください。");
+  return;
+}
+
+if(phoneEnabled && !phoneValue){
+  alert("電話ボタンを表示する場合は電話番号を入力してください。");
+  return;
+}
+    
     const status = editStatus.value;
 const enabled = editEnabled.checked;
     
@@ -526,7 +661,7 @@ const enabled = editEnabled.checked;
         error: readError
       } = await supabase
         .from("shops")
-        .select("content")
+        .select("content,actions")
         .eq("id", shopId)
         .single();
 
@@ -546,12 +681,47 @@ const enabled = editEnabled.checked;
   address: address,
   hours: hours
 };
+const updatedActions = {
+  ...(shop.actions || {}),
+
+  reservation: {
+    ...(shop.actions?.reservation || {}),
+    url: reservationUrl,
+    enabled: reservationEnabled
+  },
+
+  map: {
+    ...(shop.actions?.map || {}),
+    url: mapUrl,
+    enabled: mapEnabled
+  },
+
+  instagram: {
+    ...(shop.actions?.instagram || {}),
+    url: instagramUrl,
+    enabled: instagramEnabled
+  },
+
+  website: {
+    ...(shop.actions?.website || {}),
+    url: websiteUrl,
+    enabled: websiteEnabled
+  },
+
+  phone: {
+    ...(shop.actions?.phone || {}),
+    value: phoneValue,
+    enabled: phoneEnabled
+  }
+};
+      
       
       const { error: updateError } =
         await supabase
           .from("shops")
          .update({
   content: updatedContent,
+  actions: updatedActions,
   status: status,
   enabled: enabled
 })
