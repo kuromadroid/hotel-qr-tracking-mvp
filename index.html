@@ -1290,9 +1290,8 @@ async function resolveQrRoute(){
   // QRなしの直接アクセスは、
   // 現在のテスト用動作を残す
   if(!qrCode){
-    return "direct";
-  }
-
+  return "missing";
+}
   const {
     data,
     error
@@ -1369,6 +1368,13 @@ async function resolveQrRoute(){
     return;
   }
 
+    if(qrResolution === "missing"){
+  showError(
+    "QRコードからアクセスしてください。"
+  );
+
+  return;
+}
   if(qrResolution === "invalid"){
     showError(
       "このQRコードは無効、または現在利用できません。"
@@ -1389,29 +1395,17 @@ async function resolveQrRoute(){
 const databaseShop =
   await fetchShopFromSupabase();
 
-const hasQr =
-  new URLSearchParams(
-    window.location.search
-  ).has("qr");
-
 const baseShop =
-  databaseShop ||
-  (!hasQr ? fallbackShop : null);
+  databaseShop;
 
 const shopSource =
   databaseShop
     ? "Supabase"
-    : (
-        !hasQr && fallbackShop
-          ? "data.js"
-          : "未取得"
-      );
+    : "未取得";
 
 if(!baseShop){
   showError(
-    hasQr
-      ? "この店舗は現在公開されていません。"
-      : "店舗情報が見つかりません。"
+    "この店舗は現在公開されていません。"
   );
 
   return;
