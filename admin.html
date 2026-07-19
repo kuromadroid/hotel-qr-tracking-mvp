@@ -273,6 +273,70 @@
 </div>
 
 <div id="shopList"></div>
+<section class="placeholder" id="qrManagement">
+  <h2>QRルート管理</h2>
+
+  <button id="showCreateQrButton" type="button">
+    新規QRを追加
+  </button>
+
+  <div id="createQrForm" hidden>
+    <h3>新規QRの追加</h3>
+
+    <label for="createQrCode">QRコードID</label>
+    <input
+      id="createQrCode"
+      type="text"
+      placeholder="例：qr_hotela_minato_premium_2026summer"
+    >
+
+    <label for="createQrHotelId">ホテルID</label>
+    <input
+      id="createQrHotelId"
+      type="text"
+      placeholder="例：hotel_a"
+    >
+
+    <label for="createQrShopId">掲載店舗</label>
+    <select id="createQrShopId"></select>
+
+    <label for="createQrSlot">掲載枠</label>
+    <input
+      id="createQrSlot"
+      type="text"
+      value="standard"
+      placeholder="例：premium"
+    >
+
+    <label for="createQrEdition">掲載版</label>
+    <input
+      id="createQrEdition"
+      type="text"
+      value="current"
+      placeholder="例：2026_summer"
+    >
+
+    <label>
+      <input id="createQrEnabled" type="checkbox">
+      作成時から有効にする
+    </label>
+
+    <button id="createQrButton" type="button">
+      QRを作成
+    </button>
+
+    <button id="cancelCreateQrButton" type="button">
+      キャンセル
+    </button>
+  </div>
+
+  <p id="qrListStatus">
+    QR情報を読み込んでいます...
+  </p>
+
+  <div id="qrList"></div>
+</section>
+    
     <div id="editForm" class="placeholder" hidden>
   <h2>店舗情報の編集</h2>
 
@@ -459,6 +523,7 @@ function showAdmin(user){
   userInfo.textContent =
     `ログイン中：${user.email || user.id}`;
   loadShops();
+loadQrRoutes();
 }
 async function loadShops(){
   const status =
@@ -1111,6 +1176,444 @@ createShopButton.addEventListener("click", async () => {
     createShopButton.textContent = "店舗を作成";
   }
 });
+
+  async function loadQrRoutes(){
+  const status =
+    document.getElementById("qrListStatus");
+
+  const qrList =
+    document.getElementById("qrList");
+
+  const shopSelect =
+    document.getElementById("createQrShopId");
+
+  status.hidden = false;
+  status.textContent =
+    "QR情報を読み込んでいます...";
+
+  qrList.replaceChildren();
+
+  const {
+    data: shops,
+    error: shopsError
+  } = await supabase
+    .from("shops")
+    .select("id,content")
+    .order("id", {
+      ascending: true
+    });
+
+  if(shopsError){
+    console.error(shopsError);
+
+    status.textContent =
+      `店舗情報の取得に失敗しました：${shopsError.message}`;
+
+    return;
+  }
+
+  shopSelect.replaceChildren();
+
+  const shopNameMap = new Map();
+
+  (shops || []).forEach(shop => {
+    const name =
+      shop.content?.ja?.name ||
+      shop.content?.en?.name ||
+      shop.id;
+
+    shopNameMap.set(shop.id, name);
+
+    const option =
+      document.createElement("option");
+
+    option.value = shop.id;
+    option.textContent =
+      `${name}（${shop.id}）`;
+
+    shopSelect.appendChild(option);
+  });
+
+  const {
+    data: routes,
+    error: routesError
+  } = await supabase
+    .from("qr_routes")
+    .select(
+      "qr_code,hotel_id,shop_id,slot,edition,enabled,updated_at"
+    )
+    .order("updated_at", {
+      ascending: false
+    });
+
+  if(routesError){
+    console.error(routesError);
+
+    status.textContent =
+      `QR情報の取得に失敗しました：${routesError.message}`;
+
+    return;
+  }
+
+  if(!routes || routes.length === 0){
+    status.textContent =
+      "登録されているQRはありません。";
+
+    return;
+  }
+
+  status.hidden = true;
+
+  routes.forEach(route => {
+    const card =
+      document.createElement("div");
+
+    card.className = "placeholder";
+    card.style.marginTop = "12px";
+
+    const title =
+      document.createElement("strong");
+
+    title.textContent = route.qr_code;
+
+    card.appendChild(title);
+
+    const information = [
+      `ホテル：${route.hotel_id}`,
+      `店舗：${shopNameMap.get(route.shop_id) || route.shop_id}`,
+      `店舗ID：${route.shop_id}`,
+      `掲載枠：${route.slot}`,
+      `掲載版：${route.edition}`,
+      `状態：${route.enabled ? "有効" : "無効"}`
+    ];
+
+    information.forEach(text => {
+      card.appendChild(
+        document.createElement("br")
+      );
+
+      card.appendChild(
+        document.createTextNode(text)
+      );
+    });
+
+    card.appendChild(
+      document.createElement("br")
+    );
+
+    const copyButton =
+      document.createElement("button");
+
+    copyButton.type = "button";
+    copyButton.textContent =
+      "URLをコピー";
+
+    copyButton.style.marginTop = "12px";
+    copyButton.style.marginRight = "8px";
+
+    copyButton.addEventListener(
+      "click",
+      async () => {
+        const qrUrl =
+          new URL(
+            "./index.html",
+            window.location.href
+          );
+
+        qrUrl.search = "";
+
+        qrUrl.searchParams.set(
+          "hotel",
+          route.hotel_id
+        );
+
+        qrUrl.searchParams.set(
+          "shop",
+          route.shop_id
+        );
+
+        qrUrl.searchParams.set(
+          "slot",
+          route.slot
+        );
+
+        qrUrl.searchParams.set(
+          "edition",
+          route.edition
+        );
+
+        qrUrl.searchParams.set(
+          "qr",
+          route.qr_code
+        );
+
+        try{
+          await navigator.clipboard.writeText(
+            qrUrl.toString()
+          );
+
+          alert("QR用URLをコピーしました。");
+        }catch(error){
+          console.error(error);
+
+          prompt(
+            "このURLをコピーしてください。",
+            qrUrl.toString()
+          );
+        }
+      }
+    );
+
+    const toggleButton =
+      document.createElement("button");
+
+    toggleButton.type = "button";
+
+    toggleButton.textContent =
+      route.enabled
+        ? "無効にする"
+        : "有効にする";
+
+    toggleButton.addEventListener(
+      "click",
+      async () => {
+        const nextEnabled =
+          !route.enabled;
+
+        const confirmed =
+          confirm(
+            `${route.qr_code}を${
+              nextEnabled ? "有効" : "無効"
+            }にしますか？`
+          );
+
+        if(!confirmed){
+          return;
+        }
+
+        toggleButton.disabled = true;
+
+        const { error } = await supabase
+          .from("qr_routes")
+          .update({
+            enabled: nextEnabled,
+            updated_at:
+              new Date().toISOString()
+          })
+          .eq(
+            "qr_code",
+            route.qr_code
+          );
+
+        if(error){
+          console.error(error);
+
+          alert(
+            `変更に失敗しました：${error.message}`
+          );
+
+          toggleButton.disabled = false;
+          return;
+        }
+
+        await loadQrRoutes();
+      }
+    );
+
+    card.appendChild(copyButton);
+    card.appendChild(toggleButton);
+
+    qrList.appendChild(card);
+  });
+}
+
+const showCreateQrButton =
+  document.getElementById(
+    "showCreateQrButton"
+  );
+
+const createQrForm =
+  document.getElementById(
+    "createQrForm"
+  );
+
+const createQrCode =
+  document.getElementById(
+    "createQrCode"
+  );
+
+const createQrHotelId =
+  document.getElementById(
+    "createQrHotelId"
+  );
+
+const createQrShopId =
+  document.getElementById(
+    "createQrShopId"
+  );
+
+const createQrSlot =
+  document.getElementById(
+    "createQrSlot"
+  );
+
+const createQrEdition =
+  document.getElementById(
+    "createQrEdition"
+  );
+
+const createQrEnabled =
+  document.getElementById(
+    "createQrEnabled"
+  );
+
+const createQrButton =
+  document.getElementById(
+    "createQrButton"
+  );
+
+const cancelCreateQrButton =
+  document.getElementById(
+    "cancelCreateQrButton"
+  );
+
+showCreateQrButton.addEventListener(
+  "click",
+  () => {
+    createQrForm.hidden = false;
+
+    createQrForm.scrollIntoView({
+      behavior: "smooth"
+    });
+
+    createQrCode.focus();
+  }
+);
+
+cancelCreateQrButton.addEventListener(
+  "click",
+  () => {
+    createQrForm.hidden = true;
+
+    createQrCode.value = "";
+    createQrHotelId.value = "";
+    createQrSlot.value = "standard";
+    createQrEdition.value = "current";
+    createQrEnabled.checked = false;
+  }
+);
+
+createQrButton.addEventListener(
+  "click",
+  async () => {
+    const qrCode =
+      createQrCode.value
+        .trim()
+        .toLowerCase();
+
+    const hotelId =
+      createQrHotelId.value
+        .trim()
+        .toLowerCase();
+
+    const shopId =
+      createQrShopId.value;
+
+    const slot =
+      createQrSlot.value
+        .trim()
+        .toLowerCase();
+
+    const edition =
+      createQrEdition.value
+        .trim()
+        .toLowerCase();
+
+    const enabled =
+      createQrEnabled.checked;
+
+    if(
+      !qrCode ||
+      !hotelId ||
+      !shopId ||
+      !slot ||
+      !edition
+    ){
+      alert(
+        "すべての項目を入力してください。"
+      );
+
+      return;
+    }
+
+    const idPattern =
+      /^[a-z0-9_]+$/;
+
+    if(
+      !idPattern.test(qrCode) ||
+      !idPattern.test(hotelId) ||
+      !idPattern.test(slot) ||
+      !idPattern.test(edition)
+    ){
+      alert(
+        "ID・掲載枠・掲載版は、半角英数字とアンダーバーのみ使用できます。"
+      );
+
+      return;
+    }
+
+    createQrButton.disabled = true;
+    createQrButton.textContent =
+      "作成中...";
+
+    try{
+      const { error } = await supabase
+        .from("qr_routes")
+        .insert({
+          qr_code: qrCode,
+          hotel_id: hotelId,
+          shop_id: shopId,
+          slot: slot,
+          edition: edition,
+          enabled: enabled
+        });
+
+      if(error){
+        throw error;
+      }
+
+      alert(
+        "新規QRルートを作成しました。"
+      );
+
+      createQrCode.value = "";
+      createQrHotelId.value = "";
+      createQrSlot.value = "standard";
+      createQrEdition.value = "current";
+      createQrEnabled.checked = false;
+
+      createQrForm.hidden = true;
+
+      await loadQrRoutes();
+    }catch(error){
+      console.error(error);
+
+      if(error.code === "23505"){
+        alert(
+          "同じQRコードIDが既に登録されています。"
+        );
+      }else{
+        alert(
+          `QRの作成に失敗しました：${error.message}`
+        );
+      }
+    }finally{
+      createQrButton.disabled = false;
+      createQrButton.textContent =
+        "QRを作成";
+    }
+  }
+);
   async function verifyAdmin(){
   const {
     data: userData,
