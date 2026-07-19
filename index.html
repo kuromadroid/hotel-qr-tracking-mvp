@@ -1184,12 +1184,69 @@ function renderDebug(ctx){
   );
 }
 
+function getVisitId(){
+  const storageKey =
+    "hotel_qr_visit_id";
+
+  let visitId =
+    sessionStorage.getItem(storageKey);
+
+  if(!visitId){
+    visitId =
+      crypto.randomUUID();
+
+    sessionStorage.setItem(
+      storageKey,
+      visitId
+    );
+  }
+
+  return visitId;
+}
+
 async function logEvent(eventType, ctx){
   if(!supabase){
     if(statusEl){
       statusEl.textContent =
         "Supabase未設定です。config.jsを確認してください。";
     }
+
+    return false;
+  }
+
+  const eventAliases = {
+    reservation: "reservation_click",
+    map: "map_click",
+    instagram: "instagram_click",
+    website: "website_click",
+    phone: "phone_click",
+    coupon: "coupon_click"
+    coupon_view: "coupon_click"
+};
+
+  const normalizedEventType =
+    eventAliases[eventType] || eventType;
+
+  const allowedEventTypes = [
+    "qr_scan",
+    "page_view",
+    "reservation_click",
+    "map_click",
+    "instagram_click",
+    "website_click",
+    "phone_click",
+    "coupon_click"
+  ];
+
+  if(
+    !allowedEventTypes.includes(
+      normalizedEventType
+    )
+  ){
+    console.warn(
+      "未対応のイベントです：",
+      eventType
+    );
 
     return false;
   }
@@ -1202,26 +1259,73 @@ async function logEvent(eventType, ctx){
     currentLang
   );
 
+  const qrCode =
+    ctx.qr_code ||
+    ctx.qr_id ||
+    trackedUrl.searchParams.get("qr") ||
+    "";
+
+  if(normalizedEventType === "qr_scan"){
+    const scanKey =
+      `qr_scan_recorded_${qrCode}`;
+
+    if(sessionStorage.getItem(scanKey)){
+      return true;
+    }
+  }
+
   const payload = {
-    event_type: eventType,
-    hotel_id: ctx.hotel_id,
-    hotel_name: ctx.hotel_name,
-    shop_id: ctx.shop_id,
-    shop_name: ctx.shop_name,
-    slot: ctx.slot,
-    edition: ctx.edition,
-    qr_id: ctx.qr_id,
-    user_agent: navigator.userAgent,
-    page_url: trackedUrl.toString()
+    visit_id: getVisitId(),
+
+    event_type:
+      normalizedEventType,
+
+    hotel_id:
+      ctx.hotel_id,
+
+    shop_id:
+      ctx.shop_id,
+
+    qr_code:
+      qrCode,
+
+    slot:
+      ctx.slot,
+
+    edition:
+      ctx.edition,
+
+    language:
+      currentLang || null,
+
+    page_path:
+      location.pathname,
+
+    metadata: {
+      hotel_name:
+        ctx.hotel_name || null,
+
+      shop_name:
+        ctx.shop_name || null,
+
+      page_url:
+        trackedUrl.toString(),
+
+      user_agent:
+        navigator.userAgent
+    }
   };
 
   const { error } =
     await supabase
-      .from("events")
+      .from("events_v2")
       .insert(payload);
 
   if(error){
-    console.error(error);
+    console.error(
+      "events_v2への保存に失敗：",
+      error
+    );
 
     if(statusEl){
       statusEl.textContent =
@@ -1231,14 +1335,21 @@ async function logEvent(eventType, ctx){
     return false;
   }
 
+  if(normalizedEventType === "qr_scan"){
+    sessionStorage.setItem(
+      `qr_scan_recorded_${qrCode}`,
+      "true"
+    );
+  }
+
   if(statusEl){
     statusEl.textContent =
-      `保存成功：${eventType}`;
+      `保存成功：${normalizedEventType}`;
   }
 
   return true;
 }
-
+  
 function buildInternalUrl(url, ctx){
   const destination =
     new URL(url, location.href);
