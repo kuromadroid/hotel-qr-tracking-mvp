@@ -301,6 +301,30 @@
           </div>
         </div>
       </section>
+
+      <section class="panel">
+        <h2>QR読み取り時刻</h2>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>読み取り日時</th>
+                <th>店舗名</th>
+                <th>ホテル</th>
+                <th>QRコード</th>
+                <th>掲載枠</th>
+                <th>掲載版</th>
+              </tr>
+            </thead>
+            <tbody id="scanHistoryBody"></tbody>
+          </table>
+
+          <div id="scanHistoryEmpty" class="empty" hidden>
+            条件に一致するQR読み取りはありません。
+          </div>
+        </div>
+      </section>
     </section>
   </main>
 
@@ -605,6 +629,7 @@
       createRows(selectedShopId);
       renderSummary();
       renderTable();
+      renderScanHistory();
     }
 
     function createEmptyCounts() {
@@ -780,6 +805,102 @@
         appendCell(tr, row.counts.phone_click);
         appendCell(tr, row.counts.coupon_click);
         appendCell(tr, totalClicks);
+
+        tableBody.appendChild(tr);
+      });
+    }
+
+    function formatScanDateTime(createdAt) {
+      if (!createdAt) {
+        return "";
+      }
+
+      const date = new Date(createdAt);
+
+      return new Intl.DateTimeFormat(
+        "ja-JP",
+        {
+          timeZone: "Asia/Tokyo",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false
+        }
+      ).format(date);
+    }
+
+    function renderScanHistory() {
+      const tableBody =
+        document.getElementById("scanHistoryBody");
+
+      const emptyMessage =
+        document.getElementById("scanHistoryEmpty");
+
+      tableBody.replaceChildren();
+
+      const scanEvents = state.filteredEvents
+        .filter(
+          event =>
+            event.normalized_event_type === "qr_scan"
+        )
+        .sort(
+          (a, b) =>
+            new Date(b.created_at) -
+            new Date(a.created_at)
+        )
+        .slice(0, 500);
+
+      if (scanEvents.length === 0) {
+        emptyMessage.hidden = false;
+        return;
+      }
+
+      emptyMessage.hidden = true;
+
+      scanEvents.forEach(event => {
+        const tr = document.createElement("tr");
+        const shop = getShopById(event.shop_id);
+
+        appendCell(
+          tr,
+          formatScanDateTime(event.created_at)
+        );
+
+        appendCell(
+          tr,
+          getShopName(shop) ||
+          event.shop_name ||
+          event.shop_id
+        );
+
+        appendCell(
+          tr,
+          event.hotel_name ||
+          event.hotel_id ||
+          ""
+        );
+
+        appendCell(
+          tr,
+          event.qr_id ||
+          event.qr_code ||
+          ""
+        );
+
+        appendCell(
+          tr,
+          event.slot ||
+          ""
+        );
+
+        appendCell(
+          tr,
+          event.edition ||
+          ""
+        );
 
         tableBody.appendChild(tr);
       });
