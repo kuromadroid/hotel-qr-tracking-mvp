@@ -1174,6 +1174,7 @@ function renderDebug(ctx){
     createDebugRow("ホテル", `${ctx.hotel_name} / ${ctx.hotel_id}`),
     createDebugRow("店舗", `${ctx.shop_name} / ${ctx.shop_id}`),
     createDebugRow("言語", ctx.language),
+    createDebugRow("店舗データ", ctx.source),
     createDebugRow("掲載枠", ctx.slot),
     createDebugRow("版", ctx.edition),
     createDebugRow("QR ID", ctx.qr_id)
@@ -1324,8 +1325,8 @@ async function initialize(){
     slot,
     edition,
     qr_id: qrId,
-    language: currentLang
-  };
+    language: currentLang,
+    source: shopSource  };
 
   document.getElementById("errorCard").hidden = true;
   document.getElementById("shopCard").hidden = false;
@@ -1604,7 +1605,7 @@ if(!hasLanguageChoice){
   closeLanguageButton.hidden = true;
   openLanguageScreen();
 }
-  initialize();
+  initialize().catch(error => {   console.error(     "初期化に失敗しました：",     error   );    showError(     "店舗情報の読み込みに失敗しました。"   ); });
 </script>
 
 </body>
