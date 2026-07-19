@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  >
+
+  <title>店舗管理画面</title>
+
+  <style>
+    :root{
+      --bg:#f5f3ee;
+      --card:#fff;
+      --ink:#202020;
+      --muted:#666;
+      --line:#ded7cc;
+      --accent:#195d64;
+      --danger:#963d35;
+    }
+
+    *{
+      box-sizing:border-box;
+    }
+
+    body{
+      margin:0;
+      min-height:100vh;
+      background:var(--bg);
+      color:var(--ink);
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Hiragino Sans",
+        "Yu Gothic",
+        sans-serif;
+    }
+
+    header{
+      background:var(--accent);
+      color:white;
+      padding:20px;
+    }
+
+    header div{
+      max-width:760px;
+      margin:0 auto;
+    }
+
+    header h1{
+      margin:0;
+      font-size:24px;
+    }
+
+    header p{
+      margin:8px 0 0;
+      font-size:13px;
+      opacity:.9;
+    }
+
+    main{
+      max-width:760px;
+      margin:0 auto;
+      padding:24px 16px;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:22px;
+      box-shadow:0 12px 30px rgba(0,0,0,.06);
+    }
+
+    .field{
+      display:grid;
+      gap:7px;
+      margin-bottom:16px;
+    }
+
+    label{
+      font-size:13px;
+      font-weight:700;
+    }
+
+    input{
+      width:100%;
+      min-height:46px;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      font-size:16px;
+      background:white;
+    }
+
+    input:focus{
+      outline:2px solid rgba(25,93,100,.2);
+      border-color:var(--accent);
+    }
+
+    button{
+      appearance:none;
+      border:none;
+      border-radius:999px;
+      padding:12px 18px;
+      font-size:14px;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .primary{
+      background:var(--accent);
+      color:white;
+    }
+
+    .secondary{
+      background:#f0ece5;
+      color:var(--ink);
+    }
+
+    .message{
+      margin-top:14px;
+      font-size:13px;
+      line-height:1.7;
+      color:var(--muted);
+      overflow-wrap:anywhere;
+    }
+
+    .message.error{
+      color:var(--danger);
+    }
+
+    .admin-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:18px;
+    }
+
+    .admin-header h2{
+      margin:0;
+      font-size:21px;
+    }
+
+    .placeholder{
+      padding:18px;
+      border:1px dashed var(--line);
+      border-radius:14px;
+      background:#fbfaf7;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.8;
+    }
+
+    [hidden]{
+      display:none!important;
+    }
+  </style>
+
+  <script src="./config.js"></script>
+</head>
+
+<body>
+<header>
+  <div>
+    <h1>店舗管理画面</h1>
+    <p>ホテルマップ掲載情報の登録・編集</p>
+  </div>
+</header>
+
+<main>
+  <section class="card" id="loginCard">
+    <h2 style="margin-top:0;">管理者ログイン</h2>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="email">メールアドレス</label>
+        <input
+          type="email"
+          id="email"
+          autocomplete="username"
+          required
+        >
+      </div>
+
+      <div class="field">
+        <label for="password">パスワード</label>
+        <input
+          type="password"
+          id="password"
+          autocomplete="current-password"
+          required
+        >
+      </div>
+
+      <button
+        type="submit"
+        class="primary"
+        id="loginButton"
+      >
+        ログイン
+      </button>
+    </form>
+
+    <div class="message" id="loginMessage"></div>
+  </section>
+
+  <section class="card" id="adminCard" hidden>
+    <div class="admin-header">
+      <div>
+        <h2>管理者ページ</h2>
+        <div class="message" id="userInfo"></div>
+      </div>
+
+      <button
+        type="button"
+        class="secondary"
+        id="logoutButton"
+      >
+        ログアウト
+      </button>
+    </div>
+
+    <div class="placeholder">
+      管理者認証に成功しました。<br>
+      次の段階で、店舗一覧と編集フォームをここへ追加します。
+    </div>
+  </section>
+</main>
+
+<script type="module">
+import {
+  createClient
+} from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+const cfg =
+  window.SUPABASE_CONFIG || {};
+
+const loginCard =
+  document.getElementById("loginCard");
+
+const adminCard =
+  document.getElementById("adminCard");
+
+const loginForm =
+  document.getElementById("loginForm");
+
+const loginButton =
+  document.getElementById("loginButton");
+
+const loginMessage =
+  document.getElementById("loginMessage");
+
+const userInfo =
+  document.getElementById("userInfo");
+
+const logoutButton =
+  document.getElementById("logoutButton");
+
+if(!cfg.url || !cfg.anonKey){
+  loginMessage.textContent =
+    "Supabase接続設定が見つかりません。config.jsを確認してください。";
+
+  loginMessage.classList.add("error");
+
+  throw new Error(
+    "Supabase configuration is missing."
+  );
+}
+
+const supabase =
+  createClient(
+    cfg.url,
+    cfg.anonKey
+  );
+
+function showLogin(message = "", isError = false){
+  loginCard.hidden = false;
+  adminCard.hidden = true;
+
+  loginMessage.textContent = message;
+  loginMessage.classList.toggle(
+    "error",
+    isError
+  );
+}
+
+function showAdmin(user){
+  loginCard.hidden = true;
+  adminCard.hidden = false;
+
+  userInfo.textContent =
+    `ログイン中：${user.email || user.id}`;
+}
+
+async function verifyAdmin(){
+  const {
+    data: userData,
+    error: userError
+  } = await supabase.auth.getUser();
+
+  if(userError || !userData.user){
+    showLogin();
+    return;
+  }
+
+  const {
+    data: isAdmin,
+    error: adminError
+  } = await supabase.rpc("is_admin");
+
+  if(adminError){
+    console.error(adminError);
+
+    await supabase.auth.signOut();
+
+    showLogin(
+      `管理者判定に失敗しました：${adminError.message}`,
+      true
+    );
+
+    return;
+  }
+
+  if(isAdmin !== true){
+    await supabase.auth.signOut();
+
+    showLogin(
+      "このアカウントには管理者権限がありません。",
+      true
+    );
+
+    return;
+  }
+
+  showAdmin(userData.user);
+}
+
+loginForm.addEventListener(
+  "submit",
+  async event => {
+    event.preventDefault();
+
+    loginButton.disabled = true;
+    loginButton.textContent =
+      "ログイン中...";
+
+    loginMessage.textContent = "";
+    loginMessage.classList.remove("error");
+
+    const email =
+      document
+        .getElementById("email")
+        .value
+        .trim();
+
+    const password =
+      document
+        .getElementById("password")
+        .value;
+
+    const {
+      error
+    } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if(error){
+      showLogin(
+        `ログインに失敗しました：${error.message}`,
+        true
+      );
+
+      loginButton.disabled = false;
+      loginButton.textContent =
+        "ログイン";
+
+      return;
+    }
+
+    await verifyAdmin();
+
+    loginButton.disabled = false;
+    loginButton.textContent =
+      "ログイン";
+  }
+);
+
+logoutButton.addEventListener(
+  "click",
+  async () => {
+    await supabase.auth.signOut();
+
+    showLogin(
+      "ログアウトしました。"
+    );
+  }
+);
+
+verifyAdmin().catch(error => {
+  console.error(error);
+
+  showLogin(
+    "認証処理中にエラーが発生しました。",
+    true
+  );
+});
+</script>
+</body>
+</html>
