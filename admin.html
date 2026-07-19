@@ -244,7 +244,36 @@
 
 <label for="editHours">営業時間</label>
 <input id="editHours" type="text">
-<h3>予約</h3>
+      <h3>メイン画像</h3>
+
+<div id="heroPreviewWrap" hidden>
+  <img
+    id="editHeroPreview"
+    alt="店舗画像のプレビュー"
+    style="
+      display:block;
+      width:100%;
+      max-width:420px;
+      max-height:240px;
+      object-fit:cover;
+      border-radius:12px;
+      margin:8px 0 12px;
+    "
+  >
+</div>
+
+<label for="editHeroImage">
+  新しい画像を選択
+</label>
+
+<input
+  id="editHeroImage"
+  type="file"
+  accept="image/jpeg,image/png,image/webp"
+>
+
+<p>JPG・PNG・WebP、5MB以下</p>
+      <h3>予約</h3>
 
 <label for="editReservationUrl">予約ページURL</label>
 <input id="editReservationUrl" type="text">
@@ -402,7 +431,7 @@ async function loadShops(){
 
   const { data, error } = await supabase
     .from("shops")
-    .select("id,status,enabled,content,actions,updated_at")
+    .select("id,status,enabled,content,actions,media,updated_at")
     .order("updated_at", {
       ascending: false
     });
@@ -503,6 +532,31 @@ editAddress.value =
 
 editHours.value =
   shop.content?.ja?.hours || "";
+
+  const heroPreviewWrap =
+  document.getElementById("heroPreviewWrap");
+
+const heroPreview =
+  document.getElementById("editHeroPreview");
+
+const heroImageInput =
+  document.getElementById("editHeroImage");
+
+const currentHero =
+  shop.media?.hero || "";
+
+editForm.dataset.currentHero =
+  currentHero;
+
+heroImageInput.value = "";
+
+if(currentHero){
+  heroPreview.src = currentHero;
+  heroPreviewWrap.hidden = false;
+}else{
+  heroPreview.removeAttribute("src");
+  heroPreviewWrap.hidden = true;
+}
   document.getElementById("editReservationUrl").value =
   shop.actions?.reservation?.url || "";
 
@@ -614,7 +668,32 @@ const phoneValue =
 
 const phoneEnabled =
   document.getElementById("editPhoneEnabled").value === "true";
-if(reservationEnabled && !reservationUrl){
+
+    const heroFile =
+  document.getElementById("editHeroImage").files[0];
+
+const allowedImageTypes = [
+  "image/jpeg",
+  "image/png",
+  "image/webp"
+];
+
+if(
+  heroFile &&
+  !allowedImageTypes.includes(heroFile.type)
+){
+  alert("JPG・PNG・WebPの画像を選択してください。");
+  return;
+}
+
+if(
+  heroFile &&
+  heroFile.size > 5 * 1024 * 1024
+){
+  alert("画像は5MB以下にしてください。");
+  return;
+}
+    if(reservationEnabled && !reservationUrl){
   alert("予約ボタンを表示する場合はURLを入力してください。");
   return;
 }
@@ -661,14 +740,61 @@ const enabled = editEnabled.checked;
         error: readError
       } = await supabase
         .from("shops")
-        .select("content,actions")
+        .select("content,actions,media")
         .eq("id", shopId)
         .single();
 
       if(readError){
         throw readError;
       }
+let heroUrl =
+  editForm.dataset.currentHero || "";
 
+if(heroFile){
+  const extensionMap = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp"
+  };
+
+  const extension =
+    extensionMap[heroFile.type];
+
+  const filePath =
+    `${shopId}/hero-${Date.now()}.${extension}`;
+
+  const {
+    error: uploadError
+  } = await supabase.storage
+    .from("shop-images")
+    .upload(
+      filePath,
+      heroFile,
+      {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: heroFile.type
+      }
+    );
+
+  if(uploadError){
+    throw uploadError;
+  }
+
+  const {
+    data: publicUrlData
+  } = supabase.storage
+    .from("shop-images")
+    .getPublicUrl(filePath);
+
+  heroUrl =
+    publicUrlData.publicUrl;
+}
+
+const updatedMedia = {
+  ...(shop.media || {}),
+  hero: heroUrl
+};
       const updatedContent = {
         ...(shop.content || {})
       };
@@ -719,12 +845,14 @@ const updatedActions = {
       const { error: updateError } =
         await supabase
           .from("shops")
+        
          .update({
   content: updatedContent,
   actions: updatedActions,
+  media: updatedMedia,
   status: status,
   enabled: enabled
-})
+})      
         .eq("id", shopId);
 
       if(updateError){
@@ -756,6 +884,31 @@ document
 
     editForm.hidden = true;
     editForm.dataset.shopId = "";
+  });
+
+  document
+  .getElementById("editHeroImage")
+  .addEventListener("change", event => {
+    const file = event.target.files[0];
+
+    const previewWrap =
+      document.getElementById("heroPreviewWrap");
+
+    const preview =
+      document.getElementById("editHeroPreview");
+
+    if(!file){
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.addEventListener("load", () => {
+      preview.src = reader.result;
+      previewWrap.hidden = false;
+    });
+
+    reader.readAsDataURL(file);
   });
   async function verifyAdmin(){
   const {
