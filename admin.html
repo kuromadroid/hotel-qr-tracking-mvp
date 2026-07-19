@@ -222,8 +222,53 @@
         ログアウト
       </button>
     </div>
+<button id="showCreateShopButton" type="button">
+  新規店舗を追加
+</button>
 
-   <div class="placeholder" id="shopListStatus">
+<div id="createShopForm" class="placeholder" hidden>
+  <h2>新規店舗の追加</h2>
+
+  <label for="createShopId">
+    店舗ID
+  </label>
+  <input
+    id="createShopId"
+    type="text"
+    placeholder="例：sushi_hanamaru"
+  >
+
+  <p>
+    半角英数字とアンダーバーのみ。作成後は原則変更しません。
+  </p>
+
+  <label for="createShopName">
+    店舗名
+  </label>
+  <input
+    id="createShopName"
+    type="text"
+    placeholder="例：回転寿司 はなまる"
+  >
+
+  <label for="createShopCatchcopy">
+    キャッチコピー
+  </label>
+  <input
+    id="createShopCatchcopy"
+    type="text"
+    placeholder="例：北海道の新鮮な海の幸を楽しむ。"
+  >
+
+  <button id="createShopButton" type="button">
+    店舗を作成
+  </button>
+
+  <button id="cancelCreateShopButton" type="button">
+    キャンセル
+  </button>
+</div>
+    <div class="placeholder" id="shopListStatus">
   店舗情報を読み込んでいます...
 </div>
 
@@ -910,6 +955,162 @@ document
 
     reader.readAsDataURL(file);
   });
+
+  const showCreateShopButton =
+  document.getElementById("showCreateShopButton");
+
+const createShopForm =
+  document.getElementById("createShopForm");
+
+const createShopId =
+  document.getElementById("createShopId");
+
+const createShopName =
+  document.getElementById("createShopName");
+
+const createShopCatchcopy =
+  document.getElementById("createShopCatchcopy");
+
+const createShopButton =
+  document.getElementById("createShopButton");
+
+const cancelCreateShopButton =
+  document.getElementById("cancelCreateShopButton");
+
+showCreateShopButton.addEventListener("click", () => {
+  createShopForm.hidden = false;
+
+  createShopForm.scrollIntoView({
+    behavior: "smooth"
+  });
+
+  createShopId.focus();
+});
+
+cancelCreateShopButton.addEventListener("click", () => {
+  createShopForm.hidden = true;
+
+  createShopId.value = "";
+  createShopName.value = "";
+  createShopCatchcopy.value = "";
+});
+
+createShopButton.addEventListener("click", async () => {
+  const shopId =
+    createShopId.value.trim().toLowerCase();
+
+  const name =
+    createShopName.value.trim();
+
+  const catchcopy =
+    createShopCatchcopy.value.trim();
+
+  if(!shopId){
+    alert("店舗IDを入力してください。");
+    return;
+  }
+
+  if(!/^[a-z0-9_]+$/.test(shopId)){
+    alert(
+      "店舗IDは半角英数字とアンダーバーのみ使用できます。"
+    );
+    return;
+  }
+
+  if(!name){
+    alert("店舗名を入力してください。");
+    return;
+  }
+
+  createShopButton.disabled = true;
+  createShopButton.textContent = "作成中...";
+
+  try{
+    const { error } = await supabase
+      .from("shops")
+      .insert({
+        id: shopId,
+
+        status: "draft",
+        enabled: false,
+
+        media: {
+          hero: ""
+        },
+
+        content: {
+          ja: {
+            name: name,
+            catchcopy: catchcopy,
+            description: "",
+            address: "",
+            hours: ""
+          }
+        },
+
+        actions: {
+          reservation: {
+            url: "",
+            enabled: false
+          },
+
+          map: {
+            url: "",
+            enabled: false
+          },
+
+          instagram: {
+            url: "",
+            enabled: false
+          },
+
+          website: {
+            url: "",
+            enabled: false
+          },
+
+          phone: {
+            value: "",
+            enabled: false
+          }
+        },
+
+        coupon: {},
+        hotel_overrides: {}
+      });
+
+    if(error){
+      throw error;
+    }
+
+    alert(
+      "新規店舗を下書き状態で作成しました。"
+    );
+
+    createShopId.value = "";
+    createShopName.value = "";
+    createShopCatchcopy.value = "";
+
+    createShopForm.hidden = true;
+
+    await loadShops();
+  }catch(error){
+    console.error(error);
+
+    if(error.code === "23505"){
+      alert(
+        "同じ店舗IDが既に使用されています。"
+      );
+    }else{
+      alert(
+        `店舗の作成に失敗しました：${error.message}`
+      );
+    }
+  }finally{
+    createShopButton.disabled = false;
+    createShopButton.textContent = "店舗を作成";
+  }
+});
   async function verifyAdmin(){
   const {
     data: userData,
