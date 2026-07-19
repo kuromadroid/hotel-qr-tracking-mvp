@@ -2,32 +2,21 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1"
-  >
-
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>広告効果レポート</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./config.js"></script>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
       background: #f5f3ee;
       color: #202020;
-      font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Hiragino Sans",
-        "Yu Gothic",
-        sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans",
+        "Yu Gothic", sans-serif;
     }
 
     header {
@@ -59,14 +48,11 @@
       background: white;
     }
 
-    .panel h2 {
-      margin-top: 0;
-    }
+    .panel h2 { margin-top: 0; }
 
     .toolbar {
       display: grid;
-      grid-template-columns:
-        repeat(auto-fit, minmax(170px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
       gap: 12px;
       align-items: end;
     }
@@ -77,9 +63,7 @@
       font-weight: 700;
     }
 
-    input,
-    select,
-    button {
+    input, select, button {
       width: 100%;
       min-height: 44px;
       padding: 10px 12px;
@@ -118,8 +102,7 @@
 
     .cards {
       display: grid;
-      grid-template-columns:
-        repeat(auto-fit, minmax(150px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 12px;
     }
 
@@ -141,9 +124,7 @@
       font-weight: 800;
     }
 
-    .table-wrap {
-      overflow-x: auto;
-    }
+    .table-wrap { overflow-x: auto; }
 
     table {
       width: 100%;
@@ -151,16 +132,14 @@
       border-collapse: collapse;
     }
 
-    th,
-    td {
+    th, td {
       padding: 13px 10px;
       border-bottom: 1px solid #e5dfd5;
       text-align: right;
       white-space: nowrap;
     }
 
-    th:first-child,
-    td:first-child {
+    th:first-child, td:first-child {
       text-align: left;
     }
 
@@ -169,9 +148,7 @@
       font-size: 14px;
     }
 
-    tbody tr:hover {
-      background: #faf8f4;
-    }
+    tbody tr:hover { background: #faf8f4; }
 
     .empty {
       padding: 32px 12px;
@@ -196,17 +173,9 @@
     }
 
     @media (max-width: 600px) {
-      header h1 {
-        font-size: 24px;
-      }
-
-      main {
-        width: min(100% - 16px, 1200px);
-      }
-
-      .panel {
-        padding: 15px;
-      }
+      header h1 { font-size: 24px; }
+      main { width: min(100% - 16px, 1200px); }
+      .panel { padding: 15px; }
     }
   </style>
 </head>
@@ -214,9 +183,7 @@
 <body>
   <header>
     <h1>広告効果レポート</h1>
-    <p>
-      店舗別・ホテル別・QR別の反応を一括で確認します。
-    </p>
+    <p>登録済みの全店舗を表示し、店舗別・ホテル別・QR別の反応を確認します。</p>
   </header>
 
   <main>
@@ -225,9 +192,7 @@
     </div>
 
     <section class="panel">
-      <p id="status" class="status">
-        管理者情報を確認しています...
-      </p>
+      <p id="status" class="status">管理者情報を確認しています...</p>
     </section>
 
     <section id="reportContent" hidden>
@@ -267,30 +232,27 @@
           </div>
 
           <div>
-            <button id="refreshButton" type="button">
-              更新
-            </button>
+            <button id="refreshButton" type="button">更新</button>
           </div>
 
           <div>
-            <button
-              id="clearButton"
-              type="button"
-              class="secondary"
-            >
+            <button id="clearButton" type="button" class="secondary">
               絞り込み解除
             </button>
           </div>
 
           <div>
-            <button id="csvButton" type="button">
-              CSV出力
-            </button>
+            <button id="csvButton" type="button">CSV出力</button>
           </div>
         </div>
       </section>
 
       <section class="cards">
+        <div class="card">
+          <div class="card-label">登録店舗数</div>
+          <div id="totalShops" class="card-value">0</div>
+        </div>
+
         <div class="card">
           <div class="card-label">QR読取</div>
           <div id="totalQrScan" class="card-value">0</div>
@@ -331,12 +293,11 @@
                 <th>全クリック</th>
               </tr>
             </thead>
-
             <tbody id="shopTableBody"></tbody>
           </table>
 
           <div id="emptyMessage" class="empty" hidden>
-            条件に一致するデータがありません。
+            条件に一致する店舗がありません。
           </div>
         </div>
       </section>
@@ -344,11 +305,8 @@
   </main>
 
   <script>
-    const statusEl =
-      document.getElementById("status");
-
-    const reportContent =
-      document.getElementById("reportContent");
+    const statusEl = document.getElementById("status");
+    const reportContent = document.getElementById("reportContent");
 
     const state = {
       events: [],
@@ -367,37 +325,29 @@
       config.supabaseUrl ||
       config.url ||
       config.SUPABASE_URL ||
-      (
-        typeof SUPABASE_URL !== "undefined"
-          ? SUPABASE_URL
-          : window.SUPABASE_URL
-      );
+      (typeof SUPABASE_URL !== "undefined"
+        ? SUPABASE_URL
+        : window.SUPABASE_URL);
 
     const supabaseAnonKey =
       config.supabaseAnonKey ||
       config.anonKey ||
       config.key ||
       config.SUPABASE_ANON_KEY ||
-      (
-        typeof SUPABASE_ANON_KEY !== "undefined"
-          ? SUPABASE_ANON_KEY
-          : window.SUPABASE_ANON_KEY
-      );
+      (typeof SUPABASE_ANON_KEY !== "undefined"
+        ? SUPABASE_ANON_KEY
+        : window.SUPABASE_ANON_KEY);
 
     let db = null;
 
-    if(
-      supabaseUrl &&
-      supabaseAnonKey &&
-      window.supabase
-    ){
+    if (supabaseUrl && supabaseAnonKey && window.supabase) {
       db = window.supabase.createClient(
         supabaseUrl,
         supabaseAnonKey
       );
     }
 
-    function normalizeEventType(eventType){
+    function normalizeEventType(eventType) {
       const aliases = {
         reservation: "reservation_click",
         map: "map_click",
@@ -411,30 +361,30 @@
       return aliases[eventType] || eventType;
     }
 
-    function getShopName(shopId, event){
-      const shop =
-        state.shops.find(item => item.id === shopId);
-
-      return (
-        shop?.content?.ja?.name ||
-        event?.shop_name ||
-        shopId ||
-        "不明な店舗"
-      );
-    }
-
-    function setStatus(message, isError = false){
+    function setStatus(message, isError = false) {
       statusEl.textContent = message;
       statusEl.classList.toggle("error", isError);
     }
 
-    async function verifyAdmin(){
-      if(!db){
+    function getShopName(shop) {
+      return (
+        shop?.content?.ja?.name ||
+        shop?.content?.en?.name ||
+        shop?.id ||
+        "不明な店舗"
+      );
+    }
+
+    function getShopById(shopId) {
+      return state.shops.find(shop => shop.id === shopId);
+    }
+
+    async function verifyAdmin() {
+      if (!db) {
         setStatus(
           "Supabase設定を読み込めませんでした。config.jsを確認してください。",
           true
         );
-
         return false;
       }
 
@@ -443,15 +393,11 @@
         error: sessionError
       } = await db.auth.getSession();
 
-      if(
-        sessionError ||
-        !sessionData.session
-      ){
+      if (sessionError || !sessionData.session) {
         setStatus(
           "管理者としてログインしていません。先に管理画面からログインしてください。",
           true
         );
-
         return false;
       }
 
@@ -460,118 +406,93 @@
         error: adminError
       } = await db.rpc("is_admin");
 
-      if(adminError){
+      if (adminError) {
         console.error(adminError);
-
         setStatus(
           `管理者確認に失敗しました：${adminError.message}`,
           true
         );
-
         return false;
       }
 
-      if(!isAdmin){
+      if (!isAdmin) {
         setStatus(
           "このアカウントには計測データを見る権限がありません。",
           true
         );
-
         return false;
       }
 
       return true;
     }
 
-    async function loadData(){
-      setStatus("計測データを読み込んでいます...");
+    async function loadData() {
+      setStatus("登録店舗と計測データを読み込んでいます...");
 
-      const [
-        shopsResult,
-        eventsResult
-      ] = await Promise.all([
+      const [shopsResult, eventsResult] = await Promise.all([
         db
           .from("shops")
-          .select("id,content"),
+          .select("id,content,status,enabled")
+          .order("id", { ascending: true }),
 
         db
           .from("events")
           .select("*")
-          .order("created_at", {
-            ascending: false
-          })
+          .order("created_at", { ascending: false })
           .limit(10000)
       ]);
 
-      if(shopsResult.error){
+      if (shopsResult.error) {
         throw shopsResult.error;
       }
 
-      if(eventsResult.error){
+      if (eventsResult.error) {
         throw eventsResult.error;
       }
 
-      state.shops =
-        shopsResult.data || [];
+      state.shops = shopsResult.data || [];
 
-      state.events =
-        (eventsResult.data || []).map(event => ({
-          ...event,
-          normalized_event_type:
-            normalizeEventType(event.event_type)
-        }));
+      state.events = (eventsResult.data || []).map(event => ({
+        ...event,
+        normalized_event_type:
+          normalizeEventType(event.event_type)
+      }));
 
       populateFilters();
       applyFilters();
 
       setStatus(
-        `${state.events.length}件の計測データを読み込みました。`
+        `${state.shops.length}店舗・${state.events.length}件の計測データを読み込みました。`
       );
 
       reportContent.hidden = false;
     }
 
-    function uniqueValues(values){
-      return [
-        ...new Set(
-          values.filter(value => value)
-        )
-      ].sort((a, b) =>
-        String(a).localeCompare(
-          String(b),
-          "ja"
-        )
+    function uniqueValues(values) {
+      return [...new Set(values.filter(value => value))].sort(
+        (a, b) => String(a).localeCompare(String(b), "ja")
       );
     }
 
-    function addOptions(
-      selectElement,
-      values,
-      labelFunction
-    ){
-      const currentValue =
-        selectElement.value;
+    function addOptions(selectElement, values, labelFunction) {
+      const currentValue = selectElement.value;
 
       selectElement.innerHTML =
         '<option value="">すべて</option>';
 
       values.forEach(value => {
-        const option =
-          document.createElement("option");
-
+        const option = document.createElement("option");
         option.value = value;
-        option.textContent =
-          labelFunction
-            ? labelFunction(value)
-            : value;
-
+        option.textContent = labelFunction
+          ? labelFunction(value)
+          : value;
         selectElement.appendChild(option);
       });
 
       selectElement.value = currentValue;
     }
 
-    function populateFilters(){
+    function populateFilters() {
       const hotelFilter =
         document.getElementById("hotelFilter");
 
@@ -581,36 +502,25 @@
       const qrFilter =
         document.getElementById("qrFilter");
 
-      const hotels =
-        uniqueValues(
-          state.events.map(event =>
-            event.hotel_id
-          )
-        );
+      const hotels = uniqueValues(
+        state.events.map(event => event.hotel_id)
+      );
 
-      const shops =
-        uniqueValues(
-          state.events.map(event =>
-            event.shop_id
-          )
-        );
+      const allShopIds = state.shops.map(shop => shop.id);
 
-      const qrCodes =
-        uniqueValues(
-          state.events.map(event =>
-            event.qr_id ||
-            event.qr_code
-          )
-        );
+      const qrCodes = uniqueValues(
+        state.events.map(event =>
+          event.qr_id || event.qr_code
+        )
+      );
 
       addOptions(
         hotelFilter,
         hotels,
         hotelId => {
-          const event =
-            state.events.find(item =>
-              item.hotel_id === hotelId
-            );
+          const event = state.events.find(
+            item => item.hotel_id === hotelId
+          );
 
           return event?.hotel_name
             ? `${event.hotel_name}（${hotelId}）`
@@ -620,39 +530,29 @@
 
       addOptions(
         shopFilter,
-        shops,
-        shopId =>
-          `${getShopName(shopId)}（${shopId}）`
+        allShopIds,
+        shopId => {
+          const shop = getShopById(shopId);
+          return `${getShopName(shop)}（${shopId}）`;
+        }
       );
 
-      addOptions(
-        qrFilter,
-        qrCodes
-      );
+      addOptions(qrFilter, qrCodes);
     }
 
-    function eventMatchesDate(
-      event,
-      startDate,
-      endDate
-    ){
-      const createdAt =
-        new Date(event.created_at);
+    function eventMatchesDate(event, startDate, endDate) {
+      const createdAt = new Date(event.created_at);
 
-      if(startDate){
-        const start =
-          new Date(`${startDate}T00:00:00`);
-
-        if(createdAt < start){
+      if (startDate) {
+        const start = new Date(`${startDate}T00:00:00`);
+        if (createdAt < start) {
           return false;
         }
       }
 
-      if(endDate){
-        const end =
-          new Date(`${endDate}T23:59:59.999`);
-
-        if(createdAt > end){
+      if (endDate) {
+        const end = new Date(`${endDate}T23:59:59.999`);
+        if (createdAt > end) {
           return false;
         }
       }
@@ -660,79 +560,54 @@
       return true;
     }
 
-    function applyFilters(){
+    function applyFilters() {
       const startDate =
-        document.getElementById(
-          "startDate"
-        ).value;
+        document.getElementById("startDate").value;
 
       const endDate =
-        document.getElementById(
-          "endDate"
-        ).value;
+        document.getElementById("endDate").value;
 
       const hotelId =
-        document.getElementById(
-          "hotelFilter"
-        ).value;
+        document.getElementById("hotelFilter").value;
 
-      const shopId =
-        document.getElementById(
-          "shopFilter"
-        ).value;
+      const selectedShopId =
+        document.getElementById("shopFilter").value;
 
       const qrCode =
-        document.getElementById(
-          "qrFilter"
-        ).value;
+        document.getElementById("qrFilter").value;
 
-      state.filteredEvents =
-        state.events.filter(event => {
-          if(
-            !eventMatchesDate(
-              event,
-              startDate,
-              endDate
-            )
-          ){
-            return false;
-          }
+      state.filteredEvents = state.events.filter(event => {
+        if (!eventMatchesDate(event, startDate, endDate)) {
+          return false;
+        }
 
-          if(
-            hotelId &&
-            event.hotel_id !== hotelId
-          ){
-            return false;
-          }
+        if (hotelId && event.hotel_id !== hotelId) {
+          return false;
+        }
 
-          if(
-            shopId &&
-            event.shop_id !== shopId
-          ){
-            return false;
-          }
+        if (
+          selectedShopId &&
+          event.shop_id !== selectedShopId
+        ) {
+          return false;
+        }
 
-          const eventQrCode =
-            event.qr_id ||
-            event.qr_code ||
-            "";
+        const eventQrCode =
+          event.qr_id || event.qr_code || "";
 
-          if(
-            qrCode &&
-            eventQrCode !== qrCode
-          ){
-            return false;
-          }
+        if (qrCode && eventQrCode !== qrCode) {
+          return false;
+        }
 
-          return true;
-        });
+        return true;
+      });
 
-      createRows();
+      createRows(selectedShopId);
       renderSummary();
       renderTable();
     }
 
-    function createEmptyCounts(){
+    function createEmptyCounts() {
       return {
         qr_scan: 0,
         page_view: 0,
@@ -745,70 +620,83 @@
       };
     }
 
-    function createRows(){
+    function createRows(selectedShopId) {
       const map = new Map();
 
-      state.filteredEvents.forEach(event => {
-        const shopId =
-          event.shop_id || "unknown";
+      const shopsToShow = selectedShopId
+        ? state.shops.filter(
+            shop => shop.id === selectedShopId
+          )
+        : state.shops;
 
-        if(!map.has(shopId)){
+      // 重要：計測が0件でも、shopsに登録済みの店舗を先に全件追加する
+      shopsToShow.forEach(shop => {
+        map.set(shop.id, {
+          shop_id: shop.id,
+          shop_name: getShopName(shop),
+          counts: createEmptyCounts()
+        });
+      });
+
+      // その後、eventsの件数を該当店舗へ加算する
+      state.filteredEvents.forEach(event => {
+        const shopId = event.shop_id || "unknown";
+
+        if (selectedShopId && shopId !== selectedShopId) {
+          return;
+        }
+
+        if (!map.has(shopId)) {
+          const shop = getShopById(shopId);
+
           map.set(shopId, {
             shop_id: shopId,
             shop_name:
-              getShopName(shopId, event),
+              getShopName(shop) ||
+              event.shop_name ||
+              shopId,
             counts: createEmptyCounts()
           });
         }
 
-        const row =
-          map.get(shopId);
+        const row = map.get(shopId);
+        const eventType = event.normalized_event_type;
 
-        const eventType =
-          event.normalized_event_type;
-
-        if(
+        if (
           Object.prototype.hasOwnProperty.call(
             row.counts,
             eventType
           )
-        ){
+        ) {
           row.counts[eventType] += 1;
         }
       });
 
-      state.rows =
-        [...map.values()].sort((a, b) => {
-          const scanDifference =
-            b.counts.qr_scan -
-            a.counts.qr_scan;
+      state.rows = [...map.values()].sort((a, b) => {
+        const scanDifference =
+          b.counts.qr_scan - a.counts.qr_scan;
 
-          if(scanDifference !== 0){
-            return scanDifference;
-          }
+        if (scanDifference !== 0) {
+          return scanDifference;
+        }
 
-          return a.shop_name.localeCompare(
-            b.shop_name,
-            "ja"
-          );
-        });
+        return a.shop_name.localeCompare(
+          b.shop_name,
+          "ja"
+        );
+      });
     }
 
-    function countEvents(eventType){
+    function countEvents(eventType) {
       return state.filteredEvents.filter(
         event =>
-          event.normalized_event_type ===
-          eventType
+          event.normalized_event_type === eventType
       ).length;
     }
 
-    function renderSummary(){
-      const qrScan =
-        countEvents("qr_scan");
-
-      const pageView =
-        countEvents("page_view");
-
+    function renderSummary() {
+      const qrScan = countEvents("qr_scan");
+      const pageView = countEvents("page_view");
       const reservation =
         countEvents("reservation_click");
 
@@ -821,12 +709,16 @@
         "coupon_click"
       ];
 
-      const totalClicks =
-        state.filteredEvents.filter(event =>
+      const totalClicks = state.filteredEvents.filter(
+        event =>
           clickTypes.includes(
             event.normalized_event_type
           )
-        ).length;
+      ).length;
+
+      document.getElementById(
+        "totalShops"
+      ).textContent = state.rows.length;
 
       document.getElementById(
         "totalQrScan"
@@ -845,28 +737,22 @@
       ).textContent = totalClicks;
     }
 
-    function appendCell(rowElement, value){
-      const cell =
-        document.createElement("td");
-
+    function appendCell(rowElement, value) {
+      const cell = document.createElement("td");
       cell.textContent = String(value);
       rowElement.appendChild(cell);
     }
 
-    function renderTable(){
+    function renderTable() {
       const tableBody =
-        document.getElementById(
-          "shopTableBody"
-        );
+        document.getElementById("shopTableBody");
 
       const emptyMessage =
-        document.getElementById(
-          "emptyMessage"
-        );
+        document.getElementById("emptyMessage");
 
       tableBody.replaceChildren();
 
-      if(state.rows.length === 0){
+      if (state.rows.length === 0) {
         emptyMessage.hidden = false;
         return;
       }
@@ -874,8 +760,7 @@
       emptyMessage.hidden = true;
 
       state.rows.forEach(row => {
-        const tr =
-          document.createElement("tr");
+        const tr = document.createElement("tr");
 
         const totalClicks =
           row.counts.reservation_click +
@@ -888,41 +773,24 @@
         appendCell(tr, row.shop_name);
         appendCell(tr, row.counts.qr_scan);
         appendCell(tr, row.counts.page_view);
-        appendCell(
-          tr,
-          row.counts.reservation_click
-        );
+        appendCell(tr, row.counts.reservation_click);
         appendCell(tr, row.counts.map_click);
-        appendCell(
-          tr,
-          row.counts.instagram_click
-        );
-        appendCell(
-          tr,
-          row.counts.website_click
-        );
-        appendCell(
-          tr,
-          row.counts.phone_click
-        );
-        appendCell(
-          tr,
-          row.counts.coupon_click
-        );
+        appendCell(tr, row.counts.instagram_click);
+        appendCell(tr, row.counts.website_click);
+        appendCell(tr, row.counts.phone_click);
+        appendCell(tr, row.counts.coupon_click);
         appendCell(tr, totalClicks);
 
         tableBody.appendChild(tr);
       });
     }
 
-    function escapeCsv(value){
-      const text =
-        String(value ?? "");
-
+    function escapeCsv(value) {
+      const text = String(value ?? "");
       return `"${text.replaceAll('"', '""')}"`;
     }
 
-    function downloadCsv(){
+    function downloadCsv() {
       const headers = [
         "店舗ID",
         "店舗名",
@@ -964,109 +832,66 @@
           totalClicks
         ];
 
-        lines.push(
-          values.map(escapeCsv).join(",")
-        );
+        lines.push(values.map(escapeCsv).join(","));
       });
 
-      const blob =
-        new Blob(
-          [
-            "\uFEFF" +
-            lines.join("\n")
-          ],
-          {
-            type:
-              "text/csv;charset=utf-8"
-          }
-        );
+      const blob = new Blob(
+        ["\uFEFF" + lines.join("\n")],
+        { type: "text/csv;charset=utf-8" }
+      );
 
-      const url =
-        URL.createObjectURL(blob);
-
-      const anchor =
-        document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
 
       anchor.href = url;
-
       anchor.download =
         `広告効果レポート_${
-          new Date()
-            .toISOString()
-            .slice(0, 10)
+          new Date().toISOString().slice(0, 10)
         }.csv`;
 
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-
       URL.revokeObjectURL(url);
     }
 
     document
       .getElementById("refreshButton")
-      .addEventListener(
-        "click",
-        async () => {
-          const button =
-            document.getElementById(
-              "refreshButton"
-            );
+      .addEventListener("click", async () => {
+        const button =
+          document.getElementById("refreshButton");
 
-          button.disabled = true;
-          button.textContent = "更新中...";
+        button.disabled = true;
+        button.textContent = "更新中...";
 
-          try{
-            await loadData();
-          }catch(error){
-            console.error(error);
-
-            setStatus(
-              `読み込みに失敗しました：${error.message}`,
-              true
-            );
-          }finally{
-            button.disabled = false;
-            button.textContent = "更新";
-          }
+        try {
+          await loadData();
+        } catch (error) {
+          console.error(error);
+          setStatus(
+            `読み込みに失敗しました：${error.message}`,
+            true
+          );
+        } finally {
+          button.disabled = false;
+          button.textContent = "更新";
         }
-      );
+      });
 
     document
       .getElementById("clearButton")
-      .addEventListener(
-        "click",
-        () => {
-          document.getElementById(
-            "startDate"
-          ).value = "";
-
-          document.getElementById(
-            "endDate"
-          ).value = "";
-
-          document.getElementById(
-            "hotelFilter"
-          ).value = "";
-
-          document.getElementById(
-            "shopFilter"
-          ).value = "";
-
-          document.getElementById(
-            "qrFilter"
-          ).value = "";
-
-          applyFilters();
-        }
-      );
+      .addEventListener("click", () => {
+        document.getElementById("startDate").value = "";
+        document.getElementById("endDate").value = "";
+        document.getElementById("hotelFilter").value = "";
+        document.getElementById("shopFilter").value = "";
+        document.getElementById("qrFilter").value = "";
+        applyFilters();
+      });
 
     document
       .getElementById("csvButton")
-      .addEventListener(
-        "click",
-        downloadCsv
-      );
+      .addEventListener("click", downloadCsv);
 
     [
       "startDate",
@@ -1077,25 +902,20 @@
     ].forEach(id => {
       document
         .getElementById(id)
-        .addEventListener(
-          "change",
-          applyFilters
-        );
+        .addEventListener("change", applyFilters);
     });
 
-    async function initialize(){
-      try{
-        const authorized =
-          await verifyAdmin();
+    async function initialize() {
+      try {
+        const authorized = await verifyAdmin();
 
-        if(!authorized){
+        if (!authorized) {
           return;
         }
 
         await loadData();
-      }catch(error){
+      } catch (error) {
         console.error(error);
-
         setStatus(
           `初期化に失敗しました：${error.message}`,
           true
