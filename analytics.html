@@ -172,6 +172,22 @@
       text-decoration: none;
     }
 
+    .view-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .view-tabs button {
+      background: #eae6df;
+      color: #222;
+    }
+
+    .view-tabs button.active {
+      background: #17676c;
+      color: white;
+    }
+
     @media (max-width: 600px) {
       header h1 { font-size: 24px; }
       main { width: min(100% - 16px, 1200px); }
@@ -274,30 +290,70 @@
         </div>
       </section>
 
+      <section class="panel" id="shopDetailPanel" hidden style="margin-top:18px;">
+        <h2>選択中の店舗の詳細</h2>
+        <div class="cards" id="shopDetailCards"></div>
+      </section>
+
       <section class="panel" style="margin-top:18px;">
-        <h2>店舗別集計</h2>
+        <div class="view-tabs">
+          <button type="button" id="viewShopButton" class="active">店舗別で見る</button>
+          <button type="button" id="viewHotelButton">ホテル別で見る</button>
+        </div>
 
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>店舗名</th>
-                <th>QR読取</th>
-                <th>ページ閲覧</th>
-                <th>予約</th>
-                <th>地図</th>
-                <th>Instagram</th>
-                <th>公式サイト</th>
-                <th>電話</th>
-                <th>クーポン</th>
-                <th>全クリック</th>
-              </tr>
-            </thead>
-            <tbody id="shopTableBody"></tbody>
-          </table>
+        <div id="shopView">
+          <h2>店舗別集計</h2>
 
-          <div id="emptyMessage" class="empty" hidden>
-            条件に一致する店舗がありません。
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>店舗名</th>
+                  <th>QR読取</th>
+                  <th>ページ閲覧</th>
+                  <th>予約</th>
+                  <th>地図</th>
+                  <th>Instagram</th>
+                  <th>公式サイト</th>
+                  <th>電話</th>
+                  <th>クーポン</th>
+                  <th>全クリック</th>
+                </tr>
+              </thead>
+              <tbody id="shopTableBody"></tbody>
+            </table>
+
+            <div id="emptyMessage" class="empty" hidden>
+              条件に一致する店舗がありません。
+            </div>
+          </div>
+        </div>
+
+        <div id="hotelView" hidden>
+          <h2>ホテル別集計</h2>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ホテル</th>
+                  <th>QR読取</th>
+                  <th>ページ閲覧</th>
+                  <th>予約</th>
+                  <th>地図</th>
+                  <th>Instagram</th>
+                  <th>公式サイト</th>
+                  <th>電話</th>
+                  <th>クーポン</th>
+                  <th>全クリック</th>
+                </tr>
+              </thead>
+              <tbody id="hotelTableBody"></tbody>
+            </table>
+
+            <div id="hotelEmptyMessage" class="empty" hidden>
+              条件に一致するホテルがありません。
+            </div>
           </div>
         </div>
       </section>
@@ -336,7 +392,8 @@
       events: [],
       shops: [],
       filteredEvents: [],
-      rows: []
+      rows: [],
+      hotelRows: []
     };
 
     const config =
@@ -627,8 +684,11 @@
       });
 
       createRows(selectedShopId);
+      createHotelRows();
       renderSummary();
       renderTable();
+      renderHotelTable();
+      renderShopDetail(selectedShopId);
       renderScanHistory();
     }
 
@@ -643,6 +703,17 @@
         phone_click: 0,
         coupon_click: 0
       };
+    }
+
+    function totalClicksOf(counts) {
+      return (
+        counts.reservation_click +
+        counts.map_click +
+        counts.instagram_click +
+        counts.website_click +
+        counts.phone_click +
+        counts.coupon_click
+      );
     }
 
     function createRows(selectedShopId) {
@@ -707,6 +778,48 @@
 
         return a.shop_name.localeCompare(
           b.shop_name,
+          "ja"
+        );
+      });
+    }
+
+    function createHotelRows() {
+      const map = new Map();
+
+      state.filteredEvents.forEach(event => {
+        const hotelId = event.hotel_id || "unknown";
+
+        if (!map.has(hotelId)) {
+          map.set(hotelId, {
+            hotel_id: hotelId,
+            hotel_name: event.hotel_name || hotelId,
+            counts: createEmptyCounts()
+          });
+        }
+
+        const row = map.get(hotelId);
+        const eventType = event.normalized_event_type;
+
+        if (
+          Object.prototype.hasOwnProperty.call(
+            row.counts,
+            eventType
+          )
+        ) {
+          row.counts[eventType] += 1;
+        }
+      });
+
+      state.hotelRows = [...map.values()].sort((a, b) => {
+        const scanDifference =
+          b.counts.qr_scan - a.counts.qr_scan;
+
+        if (scanDifference !== 0) {
+          return scanDifference;
+        }
+
+        return a.hotel_name.localeCompare(
+          b.hotel_name,
           "ja"
         );
       });
@@ -787,13 +900,7 @@
       state.rows.forEach(row => {
         const tr = document.createElement("tr");
 
-        const totalClicks =
-          row.counts.reservation_click +
-          row.counts.map_click +
-          row.counts.instagram_click +
-          row.counts.website_click +
-          row.counts.phone_click +
-          row.counts.coupon_click;
+        const totalClicks = totalClicksOf(row.counts);
 
         appendCell(tr, row.shop_name);
         appendCell(tr, row.counts.qr_scan);
@@ -807,6 +914,93 @@
         appendCell(tr, totalClicks);
 
         tableBody.appendChild(tr);
+      });
+    }
+
+    function renderHotelTable() {
+      const tableBody =
+        document.getElementById("hotelTableBody");
+
+      const emptyMessage =
+        document.getElementById("hotelEmptyMessage");
+
+      tableBody.replaceChildren();
+
+      if (state.hotelRows.length === 0) {
+        emptyMessage.hidden = false;
+        return;
+      }
+
+      emptyMessage.hidden = true;
+
+      state.hotelRows.forEach(row => {
+        const tr = document.createElement("tr");
+
+        const totalClicks = totalClicksOf(row.counts);
+
+        appendCell(tr, row.hotel_name);
+        appendCell(tr, row.counts.qr_scan);
+        appendCell(tr, row.counts.page_view);
+        appendCell(tr, row.counts.reservation_click);
+        appendCell(tr, row.counts.map_click);
+        appendCell(tr, row.counts.instagram_click);
+        appendCell(tr, row.counts.website_click);
+        appendCell(tr, row.counts.phone_click);
+        appendCell(tr, row.counts.coupon_click);
+        appendCell(tr, totalClicks);
+
+        tableBody.appendChild(tr);
+      });
+    }
+
+    function renderShopDetail(selectedShopId) {
+      const panel = document.getElementById("shopDetailPanel");
+      const cardsContainer = document.getElementById("shopDetailCards");
+
+      if (!selectedShopId) {
+        panel.hidden = true;
+        return;
+      }
+
+      const row = state.rows.find(
+        item => item.shop_id === selectedShopId
+      );
+
+      if (!row) {
+        panel.hidden = true;
+        return;
+      }
+
+      panel.hidden = false;
+
+      const items = [
+        ["QR読取", row.counts.qr_scan],
+        ["ページ閲覧", row.counts.page_view],
+        ["予約クリック", row.counts.reservation_click],
+        ["地図クリック", row.counts.map_click],
+        ["Instagramクリック", row.counts.instagram_click],
+        ["公式サイトクリック", row.counts.website_click],
+        ["電話クリック", row.counts.phone_click],
+        ["クーポンクリック", row.counts.coupon_click],
+        ["全クリック合計", totalClicksOf(row.counts)]
+      ];
+
+      cardsContainer.replaceChildren();
+
+      items.forEach(([label, value]) => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const labelEl = document.createElement("div");
+        labelEl.className = "card-label";
+        labelEl.textContent = label;
+
+        const valueEl = document.createElement("div");
+        valueEl.className = "card-value";
+        valueEl.textContent = String(value);
+
+        card.append(labelEl, valueEl);
+        cardsContainer.appendChild(card);
       });
     }
 
@@ -931,13 +1125,7 @@
       ];
 
       state.rows.forEach(row => {
-        const totalClicks =
-          row.counts.reservation_click +
-          row.counts.map_click +
-          row.counts.instagram_click +
-          row.counts.website_click +
-          row.counts.phone_click +
-          row.counts.coupon_click;
+        const totalClicks = totalClicksOf(row.counts);
 
         const values = [
           row.shop_id,
@@ -957,7 +1145,7 @@
       });
 
       const blob = new Blob(
-        ["\uFEFF" + lines.join("\n")],
+        ["﻿" + lines.join("\n")],
         { type: "text/csv;charset=utf-8" }
       );
 
@@ -1024,6 +1212,32 @@
       document
         .getElementById(id)
         .addEventListener("change", applyFilters);
+    });
+
+    const viewShopButton =
+      document.getElementById("viewShopButton");
+
+    const viewHotelButton =
+      document.getElementById("viewHotelButton");
+
+    const shopView =
+      document.getElementById("shopView");
+
+    const hotelView =
+      document.getElementById("hotelView");
+
+    viewShopButton.addEventListener("click", () => {
+      shopView.hidden = false;
+      hotelView.hidden = true;
+      viewShopButton.classList.add("active");
+      viewHotelButton.classList.remove("active");
+    });
+
+    viewHotelButton.addEventListener("click", () => {
+      shopView.hidden = true;
+      hotelView.hidden = false;
+      viewHotelButton.classList.add("active");
+      viewShopButton.classList.remove("active");
     });
 
     async function initialize() {
