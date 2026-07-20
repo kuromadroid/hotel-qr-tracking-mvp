@@ -512,6 +512,8 @@ import {
   createClient
 } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
+import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
+
 const cfg =
   window.SUPABASE_CONFIG || {};
 
@@ -1622,6 +1624,82 @@ createShopButton.addEventListener("click", async () => {
   }
 });
 
+  function buildQrUrl(route){
+    const qrUrl = new URL(
+      "./index.html",
+      window.location.href
+    );
+
+    qrUrl.search = "";
+
+    qrUrl.searchParams.set("hotel", route.hotel_id);
+    qrUrl.searchParams.set("shop", route.shop_id);
+    qrUrl.searchParams.set("slot", route.slot);
+    qrUrl.searchParams.set("edition", route.edition);
+    qrUrl.searchParams.set("qr", route.qr_code);
+
+    return qrUrl.toString();
+  }
+
+  // 印刷用のQRコード画像(PNG)を、ブラウザ内でその場で生成する。
+  // 外部のQR生成サービスには一切送信しない(URLは自サイトのものだけ)。
+  async function createQrImageBlock(route){
+    const wrap = document.createElement("div");
+    wrap.style.margin = "10px 0";
+
+    const url = buildQrUrl(route);
+
+    const img = document.createElement("img");
+    img.alt = `QRコード：${route.qr_code}`;
+    img.width = 160;
+    img.height = 160;
+    img.style.background = "#ffffff";
+    img.style.border = "1px solid #ddd8cc";
+    img.style.borderRadius = "8px";
+    img.style.display = "block";
+
+    const downloadLink =
+      document.createElement("a");
+
+    downloadLink.textContent =
+      "QR画像をダウンロード(PNG)";
+
+    downloadLink.style.display = "inline-block";
+    downloadLink.style.marginTop = "6px";
+    downloadLink.download =
+      `qr_${route.qr_code}.png`;
+
+    try{
+      const dataUrl = await QRCode.toDataURL(url, {
+        width: 640,
+        margin: 2,
+        color: {
+          dark: "#202020",
+          light: "#ffffff"
+        }
+      });
+
+      img.src = dataUrl;
+      downloadLink.href = dataUrl;
+    }catch(error){
+      console.error(
+        "QR画像の生成に失敗しました：",
+        error
+      );
+
+      wrap.appendChild(
+        document.createTextNode(
+          "QR画像の生成に失敗しました。"
+        )
+      );
+    }
+
+    wrap.appendChild(img);
+    wrap.appendChild(downloadLink);
+
+    return wrap;
+  }
+
   async function loadQrRoutes(){
   const status =
     document.getElementById("qrListStatus");
@@ -1746,6 +1824,18 @@ createShopButton.addEventListener("click", async () => {
       document.createElement("br")
     );
 
+    const qrImagePlaceholder =
+      document.createElement("div");
+
+    qrImagePlaceholder.textContent =
+      "QR画像を生成しています...";
+
+    card.appendChild(qrImagePlaceholder);
+
+    createQrImageBlock(route).then(block => {
+      qrImagePlaceholder.replaceWith(block);
+    });
+
     const copyButton =
       document.createElement("button");
 
@@ -1759,42 +1849,11 @@ createShopButton.addEventListener("click", async () => {
     copyButton.addEventListener(
       "click",
       async () => {
-        const qrUrl =
-          new URL(
-            "./index.html",
-            window.location.href
-          );
-
-        qrUrl.search = "";
-
-        qrUrl.searchParams.set(
-          "hotel",
-          route.hotel_id
-        );
-
-        qrUrl.searchParams.set(
-          "shop",
-          route.shop_id
-        );
-
-        qrUrl.searchParams.set(
-          "slot",
-          route.slot
-        );
-
-        qrUrl.searchParams.set(
-          "edition",
-          route.edition
-        );
-
-        qrUrl.searchParams.set(
-          "qr",
-          route.qr_code
-        );
+        const qrUrl = buildQrUrl(route);
 
         try{
           await navigator.clipboard.writeText(
-            qrUrl.toString()
+            qrUrl
           );
 
           alert("QR用URLをコピーしました。");
@@ -1803,7 +1862,7 @@ createShopButton.addEventListener("click", async () => {
 
           prompt(
             "このURLをコピーしてください。",
-            qrUrl.toString()
+            qrUrl
           );
         }
       }
