@@ -430,6 +430,43 @@
 >
 
 <p>JPG・PNG・WebP、5MB以下</p>
+
+<h3>店舗ロゴ(任意)</h3>
+
+<p class="message">
+  店名の横に小さく表示されるロゴです。ロゴがない店舗は未設定のままで問題ありません。
+</p>
+
+<img
+  id="editLogoPreview"
+  alt="ロゴのプレビュー"
+  hidden
+  style="
+    display:block;
+    width:64px;
+    height:64px;
+    object-fit:cover;
+    border-radius:50%;
+    border:1px solid #ddd8cc;
+    margin:8px 0 12px;
+  "
+>
+
+<label for="editLogoImage">
+  ロゴ画像を選択
+</label>
+
+<input
+  id="editLogoImage"
+  type="file"
+  accept="image/jpeg,image/png,image/webp"
+>
+
+<p>JPG・PNG・WebP、2MB以下</p>
+
+<button id="removeLogoButton" type="button">
+  ロゴを削除
+</button>
       <h3>予約</h3>
 
 <label for="editReservationUrl">予約ページURL</label>
@@ -931,6 +968,29 @@ if(currentHero){
   heroPreviewWrap.hidden = true;
   heroFocusHint.hidden = true;
 }
+
+const logoPreview =
+  document.getElementById("editLogoPreview");
+
+const logoImageInput =
+  document.getElementById("editLogoImage");
+
+const currentLogo =
+  shop.media?.logo || "";
+
+editForm.dataset.currentLogo = currentLogo;
+editForm.dataset.removeLogo = "false";
+
+logoImageInput.value = "";
+
+if(currentLogo){
+  logoPreview.src = currentLogo;
+  logoPreview.hidden = false;
+}else{
+  logoPreview.removeAttribute("src");
+  logoPreview.hidden = true;
+}
+
   document.getElementById("editReservationUrl").value =
   shop.actions?.reservation?.url || "";
 
@@ -1173,6 +1233,25 @@ if(
   alert("画像は5MB以下にしてください。");
   return;
 }
+
+const logoFile =
+  document.getElementById("editLogoImage").files[0];
+
+if(
+  logoFile &&
+  !allowedImageTypes.includes(logoFile.type)
+){
+  alert("ロゴはJPG・PNG・WebPの画像を選択してください。");
+  return;
+}
+
+if(
+  logoFile &&
+  logoFile.size > 2 * 1024 * 1024
+){
+  alert("ロゴ画像は2MB以下にしてください。");
+  return;
+}
     if(reservationEnabled && !reservationUrl){
   alert("予約ボタンを表示する場合はURLを入力してください。");
   return;
@@ -1271,10 +1350,57 @@ if(heroFile){
     publicUrlData.publicUrl;
 }
 
+let logoUrl =
+  editForm.dataset.removeLogo === "true"
+    ? ""
+    : (editForm.dataset.currentLogo || "");
+
+if(logoFile){
+  const extensionMap = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp"
+  };
+
+  const extension =
+    extensionMap[logoFile.type];
+
+  const filePath =
+    `${shopId}/logo-${Date.now()}.${extension}`;
+
+  const {
+    error: logoUploadError
+  } = await supabase.storage
+    .from("shop-images")
+    .upload(
+      filePath,
+      logoFile,
+      {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: logoFile.type
+      }
+    );
+
+  if(logoUploadError){
+    throw logoUploadError;
+  }
+
+  const {
+    data: logoPublicUrlData
+  } = supabase.storage
+    .from("shop-images")
+    .getPublicUrl(filePath);
+
+  logoUrl =
+    logoPublicUrlData.publicUrl;
+}
+
 const updatedMedia = {
   ...(shop.media || {}),
   hero: heroUrl,
-  heroFocus: editForm.dataset.heroFocus || "50% 50%"
+  heroFocus: editForm.dataset.heroFocus || "50% 50%",
+  logo: logoUrl
 };
       // 下書き(editForm._draftContent)には、これまでタブ切り替え時に
       // 保存してきた各言語の入力内容が入っている。
@@ -1465,6 +1591,52 @@ document
 
       heroFocusMarker.style.left = `${x}%`;
       heroFocusMarker.style.top = `${y}%`;
+    });
+
+  document
+    .getElementById("editLogoImage")
+    .addEventListener("change", event => {
+      const file = event.target.files[0];
+
+      const preview =
+        document.getElementById("editLogoPreview");
+
+      const editForm =
+        document.getElementById("editForm");
+
+      if(!file){
+        return;
+      }
+
+      editForm.dataset.removeLogo = "false";
+
+      const reader = new FileReader();
+
+      reader.addEventListener("load", () => {
+        preview.src = reader.result;
+        preview.hidden = false;
+      });
+
+      reader.readAsDataURL(file);
+    });
+
+  document
+    .getElementById("removeLogoButton")
+    .addEventListener("click", () => {
+      const editForm =
+        document.getElementById("editForm");
+
+      const preview =
+        document.getElementById("editLogoPreview");
+
+      const logoImageInput =
+        document.getElementById("editLogoImage");
+
+      logoImageInput.value = "";
+      preview.removeAttribute("src");
+      preview.hidden = true;
+
+      editForm.dataset.removeLogo = "true";
     });
 
   const showCreateShopButton =

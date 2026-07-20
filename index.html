@@ -597,10 +597,19 @@
       <div>
         <div class="badge-list" id="badgeList"></div>
 
-        <h2
-          id="shopName"
-          style="margin:8px 0 4px;font-size:25px;font-weight:700;"
-        ></h2>
+        <div style="display:flex;align-items:center;gap:10px;margin:8px 0 4px;">
+          <img
+            id="shopLogo"
+            alt=""
+            hidden
+            style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:1px solid #e5ddcb;background:#fff;flex-shrink:0;"
+          >
+
+          <h2
+            id="shopName"
+            style="margin:0;font-size:25px;font-weight:700;"
+          ></h2>
+        </div>
 
         <div class="muted" id="shopMeta"></div>
 
@@ -1057,10 +1066,11 @@ function renderHero(shop, content){
   const fallback =
     document.getElementById("heroFallback");
 
-  fallback.textContent =
-    content.category || content.name || "";
-
   if(shop.media?.hero){
+    // 画像がある場合は、その上に店名などのテキストを
+    // 重ねて表示しない(画像をそのまま見せる)。
+    fallback.textContent = "";
+
     hero.style.backgroundImage =
       `url("${shop.media.hero}")`;
 
@@ -1069,9 +1079,29 @@ function renderHero(shop, content){
 
     hero.classList.add("has-image");
   }else{
+    // 画像が未設定のときだけ、代わりに店名/カテゴリを表示する。
+    fallback.textContent =
+      content.category || content.name || "";
+
     hero.style.backgroundImage = "";
     hero.style.backgroundPosition = "";
     hero.classList.remove("has-image");
+  }
+}
+
+function renderLogo(shop){
+  const logo =
+    document.getElementById("shopLogo");
+
+  const logoUrl =
+    shop.media?.logo || "";
+
+  if(logoUrl){
+    logo.src = logoUrl;
+    logo.hidden = false;
+  }else{
+    logo.removeAttribute("src");
+    logo.hidden = true;
   }
 }
 
@@ -1512,6 +1542,7 @@ if(!baseShop){
   document.getElementById("shopCard").hidden = false;
 
   renderHero(shop, content);
+  renderLogo(shop);
   renderGallery(shop, content);
   renderTags(content.tags);
   renderBadges(shop, content);
