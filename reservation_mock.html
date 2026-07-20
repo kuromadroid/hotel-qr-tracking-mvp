@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
   <title>仮予約ページ</title>
   <style>
     body{margin:0;background:#f6f3ee;color:#202020;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
@@ -32,13 +33,23 @@
   </div>
 </main>
 <script>
+// 注記: このページはURLパラメータを直接受け取れるため、
+// innerHTMLへの文字列展開はXSSの原因になる。textContentのみを
+// 使い、HTML/スクリプトとして解釈されないようにしている。
 const params = new URLSearchParams(location.search);
-document.getElementById("info").innerHTML = `
-  from_hotel: ${params.get("from_hotel") || "-"}<br>
-  from_qr: ${params.get("from_qr") || "-"}<br>
-  shop: ${params.get("shop") || "-"}<br>
-  lang: ${params.get("lang") || "ja"}
-`;
+const info = document.getElementById("info");
+info.innerHTML = "";
+
+function addInfoRow(label, value){
+  const row = document.createElement("div");
+  row.textContent = `${label}: ${value}`;
+  info.appendChild(row);
+}
+
+addInfoRow("from_hotel", params.get("from_hotel") || "-");
+addInfoRow("from_qr", params.get("from_qr") || "-");
+addInfoRow("shop", params.get("shop") || "-");
+addInfoRow("lang", params.get("lang") || "ja");
 </script>
 </body>
 </html>

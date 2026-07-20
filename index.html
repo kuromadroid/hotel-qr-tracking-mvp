@@ -240,6 +240,11 @@
       gap:6px;
     }
 
+    button:disabled{
+      opacity:.55;
+      cursor:default;
+    }
+
     .primary{
       background:var(--accent);
       border-color:var(--accent);
@@ -443,7 +448,7 @@
       background:#f3f0ea;
       font-size:20px;
       cursor:pointer;
-    } 
+    }
   </style>
 
   <!-- 店舗情報 -->
@@ -491,49 +496,10 @@
     </div>
   </div>
 </div>
-  <body>
-
-<div class="language-screen" id="languageScreen" hidden>
-  <div class="language-card">
-    <button
-      type="button"
-      class="language-close"
-      id="closeLanguageButton"
-      aria-label="閉じる"
-    >
-      ×
-    </button>
-
-    <h2>言語を選択してください</h2>
-    <p>Please select your language</p>
-
-    <div class="language-list">
-      <button type="button" class="language-choice" data-language="ja">
-        日本語
-      </button>
-
-      <button type="button" class="language-choice" data-language="en">
-        English
-      </button>
-
-      <button type="button" class="language-choice" data-language="zh-cn">
-        简体中文
-      </button>
-
-      <button type="button" class="language-choice" data-language="zh-tw">
-        繁體中文
-      </button>
-
-      <button type="button" class="language-choice" data-language="ko">
-        한국어
-      </button>
-    </div>
-  </div>
-</div>
 
   <header>
   <div class="header-inner">
-    
+
     <div class="header-top">
   <div class="small">
     SAPPORO HOTEL RESTAURANT GUIDE
@@ -548,7 +514,7 @@
   </button>
 </div>
 
-    
+
 
     <h1 id="pageTitle">
       札幌ホテルマップ
@@ -765,7 +731,9 @@ const params = new URLSearchParams(location.search);
 const appData = window.APP_DATA || {};
 const settings = appData.settings || {};
 const hotels = appData.hotels || {};
-const shops = appData.shops || {};
+// 注記: 以前ここに `const shops = appData.shops || {};` がありましたが、
+// この変数はどこからも参照されていなかった(実際の店舗データは
+// fetchShopFromSupabase() 経由でSupabaseから取得)ため削除しました。
 
 const supportedLanguages =
   settings.supportedLanguages ||
@@ -822,7 +790,6 @@ const hotelId =
 
 const shopId =
   params.get("shop") ||
-  Object.keys(shops)[0] ||
   "";
 
 const slot =
@@ -838,7 +805,6 @@ const qrId =
 const debugMode =
   params.get("debug") === "1";
 
-const fallbackShop = shops[shopId];
 const hotel = hotels[hotelId] || {};
 
 const statusEl =
@@ -877,7 +843,7 @@ const supabase =
     .eq("id", shopId)
 
 .eq("status", "published")
-.eq("enabled", true)    
+.eq("enabled", true)
     .maybeSingle();
 
   if(error){
@@ -1184,6 +1150,45 @@ function renderDebug(ctx){
   );
 }
 
+// --- 重複計測の簡易対策 -------------------------------------------
+// ページ再読み込み・戻る操作による qr_scan / page_view の連続記録を
+// 抑制するため、同一タブ内では同じQR IDでの初回記録のみ送信する。
+// 厳密なbot対策やクロスセッションの重複排除ではなく、あくまで試験運用
+// 向けの簡易的な間引き。
+function shouldLogOncePerSession(key){
+  try{
+    const flagKey = `qrlog_${key}`;
+
+    if(sessionStorage.getItem(flagKey)){
+      return false;
+    }
+
+    sessionStorage.setItem(flagKey, "1");
+    return true;
+  }catch(_e){
+    // sessionStorageが使えない環境(プライベートモード等)では
+    // 間引きなしで通常通り記録する。
+    return true;
+  }
+}
+
+// クリック系イベントの連打による二重送信を防ぐための簡易ガード。
+function guardAgainstDoubleClick(button){
+  if(!button || button.dataset.clicking === "1"){
+    return false;
+  }
+
+  button.dataset.clicking = "1";
+  button.disabled = true;
+
+  window.setTimeout(() => {
+    button.disabled = false;
+    delete button.dataset.clicking;
+  }, 1500);
+
+  return true;
+}
+
 async function logEvent(eventType, ctx){
   if(!supabase){
     if(statusEl){
@@ -1225,7 +1230,9 @@ async function logEvent(eventType, ctx){
 
     if(statusEl){
       statusEl.textContent =
-        `保存失敗：${error.message}`;
+        debugMode
+          ? `保存失敗：${error.message}`
+          : "保存に失敗しました。";
     }
 
     return false;
@@ -1382,7 +1389,7 @@ async function resolveQrRoute(){
 
     return;
   }
-    
+
   setText("pageTitle", ui.pageTitle);
   setText("pageSubtitle", ui.pageSubtitle);
 
@@ -1539,7 +1546,11 @@ if(!baseShop){
   if(reservationEnabled){
     document
       .getElementById("reserveBtn")
-      .addEventListener("click", () => {
+      .addEventListener("click", (event) => {
+        if(!guardAgainstDoubleClick(event.currentTarget)){
+          return;
+        }
+
         moveToUrl(
           "reserve_click",
           actions.reservation.url,
@@ -1551,7 +1562,11 @@ if(!baseShop){
   if(mapEnabled){
     document
       .getElementById("mapBtn")
-      .addEventListener("click", () => {
+      .addEventListener("click", (event) => {
+        if(!guardAgainstDoubleClick(event.currentTarget)){
+          return;
+        }
+
         moveToUrl(
           "map_click",
           actions.map.url,
@@ -1563,7 +1578,11 @@ if(!baseShop){
   if(phoneEnabled){
     document
       .getElementById("phoneBtn")
-      .addEventListener("click", async () => {
+      .addEventListener("click", async (event) => {
+        if(!guardAgainstDoubleClick(event.currentTarget)){
+          return;
+        }
+
         await logEvent(
           "phone_click",
           ctx
@@ -1577,7 +1596,11 @@ if(!baseShop){
   if(instagramEnabled){
     document
       .getElementById("instagramBtn")
-      .addEventListener("click", () => {
+      .addEventListener("click", (event) => {
+        if(!guardAgainstDoubleClick(event.currentTarget)){
+          return;
+        }
+
         moveToUrl(
           "instagram_click",
           actions.instagram.url,
@@ -1589,7 +1612,11 @@ if(!baseShop){
   if(websiteEnabled){
     document
       .getElementById("websiteBtn")
-      .addEventListener("click", () => {
+      .addEventListener("click", (event) => {
+        if(!guardAgainstDoubleClick(event.currentTarget)){
+          return;
+        }
+
         moveToUrl(
           "website_click",
           actions.website.url,
@@ -1618,7 +1645,11 @@ if(!baseShop){
 
     document
       .getElementById("couponBtn")
-      .addEventListener("click", async () => {
+      .addEventListener("click", async (event) => {
+        if(!guardAgainstDoubleClick(event.currentTarget)){
+          return;
+        }
+
         document
           .getElementById("couponBox")
           .classList.toggle("show");
@@ -1641,8 +1672,13 @@ if(!baseShop){
     return;
   }
 
-  logEvent("qr_scan", ctx);
-  logEvent("page_view", ctx);
+  if(shouldLogOncePerSession(`${ctx.qr_id}_scan`)){
+    logEvent("qr_scan", ctx);
+  }
+
+  if(shouldLogOncePerSession(`${ctx.qr_id}_view`)){
+    logEvent("page_view", ctx);
+  }
 }
 const languageScreen =
   document.getElementById("languageScreen");
@@ -1720,6 +1756,5 @@ if(!hasLanguageChoice){
 }
   initialize().catch(error => {   console.error(     "初期化に失敗しました：",     error   );    showError(     "店舗情報の読み込みに失敗しました。"   ); });
 </script>
-
 </body>
 </html>
