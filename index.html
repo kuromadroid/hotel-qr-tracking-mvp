@@ -1064,9 +1064,13 @@ function renderHero(shop, content){
     hero.style.backgroundImage =
       `url("${shop.media.hero}")`;
 
+    hero.style.backgroundPosition =
+      shop.media.heroFocus || "center";
+
     hero.classList.add("has-image");
   }else{
     hero.style.backgroundImage = "";
+    hero.style.backgroundPosition = "";
     hero.classList.remove("has-image");
   }
 }

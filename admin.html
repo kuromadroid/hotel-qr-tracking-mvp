@@ -119,6 +119,11 @@
       color:var(--ink);
     }
 
+    .danger-btn{
+      background:#fbe9e6;
+      color:var(--danger);
+    }
+
     .message{
       margin-top:14px;
       font-size:13px;
@@ -336,7 +341,7 @@
 
   <div id="qrList"></div>
 </section>
-    
+
     <div id="editForm" class="placeholder" hidden>
   <h2>店舗情報の編集</h2>
 
@@ -355,7 +360,11 @@
 <input id="editHours" type="text">
       <h3>メイン画像</h3>
 
-<div id="heroPreviewWrap" hidden>
+<p class="message" id="heroFocusHint" hidden>
+  プレビュー内をクリックすると、その位置がサムネイルの中心(表示の基準点)になります。
+</p>
+
+<div id="heroPreviewWrap" hidden style="position:relative;display:inline-block;">
   <img
     id="editHeroPreview"
     alt="店舗画像のプレビュー"
@@ -367,8 +376,26 @@
       object-fit:cover;
       border-radius:12px;
       margin:8px 0 12px;
+      cursor:crosshair;
+      user-select:none;
     "
   >
+  <div
+    id="heroFocusMarker"
+    style="
+      position:absolute;
+      width:18px;
+      height:18px;
+      margin:-9px 0 6px -9px;
+      border-radius:50%;
+      border:2px solid white;
+      background:rgba(25,93,100,.85);
+      box-shadow:0 0 0 1px rgba(0,0,0,.35);
+      pointer-events:none;
+      top:50%;
+      left:50%;
+    "
+  ></div>
 </div>
 
 <label for="editHeroImage">
@@ -436,7 +463,7 @@
   <option value="true">表示する</option>
   <option value="false">表示しない</option>
 </select>
-      
+
 <label for="editStatus">公開状態</label>
 <select id="editStatus">
   <option value="draft">下書き</option>
@@ -455,7 +482,7 @@
   <button id="cancelEditButton" type="button">
     キャンセル
   </button>
-</div> 
+</div>
   </section>
 </main>
 
@@ -612,7 +639,7 @@ editButton.addEventListener("click", () => {
 
   const editCatchcopy =
     document.getElementById("editCatchcopy");
-  
+
   const editDescription =
   document.getElementById("editDescription");
 
@@ -620,8 +647,8 @@ const editAddress =
   document.getElementById("editAddress");
 
 const editHours =
-  document.getElementById("editHours"); 
-  
+  document.getElementById("editHours");
+
   const editStatus =
   document.getElementById("editStatus");
 
@@ -652,20 +679,45 @@ const heroPreview =
 const heroImageInput =
   document.getElementById("editHeroImage");
 
+const heroFocusHint =
+  document.getElementById("heroFocusHint");
+
+const heroFocusMarker =
+  document.getElementById("heroFocusMarker");
+
 const currentHero =
   shop.media?.hero || "";
+
+const currentHeroFocus =
+  shop.media?.heroFocus || "50% 50%";
 
 editForm.dataset.currentHero =
   currentHero;
 
+editForm.dataset.heroFocus =
+  currentHeroFocus;
+
 heroImageInput.value = "";
+
+function applyHeroFocusToUi(positionValue){
+  const [fx, fy] = positionValue
+    .split(" ")
+    .map(part => parseFloat(part) || 50);
+
+  heroPreview.style.objectPosition = positionValue;
+  heroFocusMarker.style.left = `${fx}%`;
+  heroFocusMarker.style.top = `${fy}%`;
+}
 
 if(currentHero){
   heroPreview.src = currentHero;
   heroPreviewWrap.hidden = false;
+  heroFocusHint.hidden = false;
+  applyHeroFocusToUi(currentHeroFocus);
 }else{
   heroPreview.removeAttribute("src");
   heroPreviewWrap.hidden = true;
+  heroFocusHint.hidden = true;
 }
   document.getElementById("editReservationUrl").value =
   shop.actions?.reservation?.url || "";
@@ -707,8 +759,117 @@ editEnabled.checked =
     behavior: "smooth"
   });
 });
-    
+
+const deleteButton = document.createElement("button");
+deleteButton.type = "button";
+deleteButton.className = "danger-btn";
+deleteButton.textContent = "削除";
+deleteButton.style.marginTop = "12px";
+deleteButton.style.marginLeft = "8px";
+
+deleteButton.addEventListener("click", async () => {
+  const initialConfirmed = confirm(
+    `店舗「${name}」(ID: ${shop.id})を削除しますか？\n` +
+    `この操作は取り消せません。`
+  );
+
+  if(!initialConfirmed){
+    return;
+  }
+
+  deleteButton.disabled = true;
+  deleteButton.textContent = "確認中...";
+
+  // この店舗を参照しているQRルートがあるか先に確認する。
+  // 外部キー制約により、参照が残っていると店舗の削除はできない。
+  const {
+    data: linkedRoutes,
+    error: linkedRoutesError
+  } = await supabase
+    .from("qr_routes")
+    .select("qr_code")
+    .eq("shop_id", shop.id);
+
+  if(linkedRoutesError){
+    console.error(linkedRoutesError);
+
+    alert(
+      `QRルートの確認に失敗しました：${linkedRoutesError.message}`
+    );
+
+    deleteButton.disabled = false;
+    deleteButton.textContent = "削除";
+    return;
+  }
+
+  const linkedCount = (linkedRoutes || []).length;
+
+  if(linkedCount > 0){
+    const cascadeConfirmed = confirm(
+      `この店舗には ${linkedCount} 件のQRコードが紐づいています。\n` +
+      `店舗を削除すると、これらのQRコードも一緒に削除され、` +
+      `印刷済みのパンフレット等からアクセスできなくなります。\n\n` +
+      `QRコードごと削除してよろしいですか？\n` +
+      `(「キャンセル」を選ぶと、店舗もQRコードも削除されません)`
+    );
+
+    if(!cascadeConfirmed){
+      deleteButton.disabled = false;
+      deleteButton.textContent = "削除";
+      return;
+    }
+
+    deleteButton.textContent = "QRコードを削除中...";
+
+    const { error: deleteRoutesError } = await supabase
+      .from("qr_routes")
+      .delete()
+      .eq("shop_id", shop.id);
+
+    if(deleteRoutesError){
+      console.error(deleteRoutesError);
+
+      alert(
+        `QRコードの削除に失敗しました：${deleteRoutesError.message}`
+      );
+
+      deleteButton.disabled = false;
+      deleteButton.textContent = "削除";
+      return;
+    }
+  }
+
+  deleteButton.textContent = "削除中...";
+
+  const { error: deleteError } = await supabase
+    .from("shops")
+    .delete()
+    .eq("id", shop.id);
+
+  if(deleteError){
+    console.error(deleteError);
+
+    alert(
+      `削除に失敗しました：${deleteError.message}`
+    );
+
+    deleteButton.disabled = false;
+    deleteButton.textContent = "削除";
+    return;
+  }
+
+  alert(
+    linkedCount > 0
+      ? `店舗と、紐づいていた ${linkedCount} 件のQRコードを削除しました。`
+      : "店舗を削除しました。"
+  );
+
+  await loadShops();
+  await loadQrRoutes();
+});
+
 item.appendChild(editButton);
+item.appendChild(deleteButton);
     shopList.appendChild(item);
   });
 }
@@ -827,10 +988,10 @@ if(phoneEnabled && !phoneValue){
   alert("電話ボタンを表示する場合は電話番号を入力してください。");
   return;
 }
-    
+
     const status = editStatus.value;
 const enabled = editEnabled.checked;
-    
+
     if(!shopId){
       alert("編集する店舗が選択されていません。");
       return;
@@ -903,7 +1064,8 @@ if(heroFile){
 
 const updatedMedia = {
   ...(shop.media || {}),
-  hero: heroUrl
+  hero: heroUrl,
+  heroFocus: editForm.dataset.heroFocus || "50% 50%"
 };
       const updatedContent = {
         ...(shop.content || {})
@@ -950,19 +1112,19 @@ const updatedActions = {
     enabled: phoneEnabled
   }
 };
-      
-      
+
+
       const { error: updateError } =
         await supabase
           .from("shops")
-        
+
          .update({
   content: updatedContent,
   actions: updatedActions,
   media: updatedMedia,
   status: status,
   enabled: enabled
-})      
+})
         .eq("id", shopId);
 
       if(updateError){
@@ -1007,6 +1169,15 @@ document
     const preview =
       document.getElementById("editHeroPreview");
 
+    const heroFocusHint =
+      document.getElementById("heroFocusHint");
+
+    const heroFocusMarker =
+      document.getElementById("heroFocusMarker");
+
+    const editForm =
+      document.getElementById("editForm");
+
     if(!file){
       return;
     }
@@ -1016,10 +1187,48 @@ document
     reader.addEventListener("load", () => {
       preview.src = reader.result;
       previewWrap.hidden = false;
+      heroFocusHint.hidden = false;
+
+      // 新しい画像を選んだ場合は、位置指定を中央にリセットする。
+      editForm.dataset.heroFocus = "50% 50%";
+      preview.style.objectPosition = "50% 50%";
+      heroFocusMarker.style.left = "50%";
+      heroFocusMarker.style.top = "50%";
     });
 
     reader.readAsDataURL(file);
   });
+
+  // プレビュー画像をクリックした位置を、サムネイルの基準点として保存する。
+  document
+    .getElementById("editHeroPreview")
+    .addEventListener("click", event => {
+      const editForm =
+        document.getElementById("editForm");
+
+      const heroFocusMarker =
+        document.getElementById("heroFocusMarker");
+
+      const img = event.currentTarget;
+      const rect = img.getBoundingClientRect();
+
+      const rawX =
+        ((event.clientX - rect.left) / rect.width) * 100;
+
+      const rawY =
+        ((event.clientY - rect.top) / rect.height) * 100;
+
+      const x = Math.max(0, Math.min(100, Math.round(rawX)));
+      const y = Math.max(0, Math.min(100, Math.round(rawY)));
+
+      const positionValue = `${x}% ${y}%`;
+
+      editForm.dataset.heroFocus = positionValue;
+      img.style.objectPosition = positionValue;
+
+      heroFocusMarker.style.left = `${x}%`;
+      heroFocusMarker.style.top = `${y}%`;
+    });
 
   const showCreateShopButton =
   document.getElementById("showCreateShopButton");
@@ -1100,7 +1309,8 @@ createShopButton.addEventListener("click", async () => {
         enabled: false,
 
         media: {
-          hero: ""
+          hero: "",
+          heroFocus: "50% 50%"
         },
 
         content: {
