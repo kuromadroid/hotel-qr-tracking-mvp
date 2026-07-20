@@ -1,0 +1,1879 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  >
+
+  <title>店舗管理画面</title>
+
+  <style>
+    :root{
+      --bg:#f5f3ee;
+      --card:#fff;
+      --ink:#202020;
+      --muted:#666;
+      --line:#ded7cc;
+      --accent:#195d64;
+      --danger:#963d35;
+    }
+
+    *{
+      box-sizing:border-box;
+    }
+
+    body{
+      margin:0;
+      min-height:100vh;
+      background:var(--bg);
+      color:var(--ink);
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Hiragino Sans",
+        "Yu Gothic",
+        sans-serif;
+    }
+
+    header{
+      background:var(--accent);
+      color:white;
+      padding:20px;
+    }
+
+    header div{
+      max-width:760px;
+      margin:0 auto;
+    }
+
+    header h1{
+      margin:0;
+      font-size:24px;
+    }
+
+    header p{
+      margin:8px 0 0;
+      font-size:13px;
+      opacity:.9;
+    }
+
+    main{
+      max-width:760px;
+      margin:0 auto;
+      padding:24px 16px;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:22px;
+      box-shadow:0 12px 30px rgba(0,0,0,.06);
+    }
+
+    .field{
+      display:grid;
+      gap:7px;
+      margin-bottom:16px;
+    }
+
+    label{
+      font-size:13px;
+      font-weight:700;
+    }
+
+    input{
+      width:100%;
+      min-height:46px;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      font-size:16px;
+      background:white;
+    }
+
+    input:focus{
+      outline:2px solid rgba(25,93,100,.2);
+      border-color:var(--accent);
+    }
+
+    button{
+      appearance:none;
+      border:none;
+      border-radius:999px;
+      padding:12px 18px;
+      font-size:14px;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .primary{
+      background:var(--accent);
+      color:white;
+    }
+
+    .secondary{
+      background:#f0ece5;
+      color:var(--ink);
+    }
+
+    .danger-btn{
+      background:#fbe9e6;
+      color:var(--danger);
+    }
+
+    .message{
+      margin-top:14px;
+      font-size:13px;
+      line-height:1.7;
+      color:var(--muted);
+      overflow-wrap:anywhere;
+    }
+
+    .message.error{
+      color:var(--danger);
+    }
+
+    .admin-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:18px;
+    }
+
+    .admin-header h2{
+      margin:0;
+      font-size:21px;
+    }
+
+    .placeholder{
+      padding:18px;
+      border:1px dashed var(--line);
+      border-radius:14px;
+      background:#fbfaf7;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.8;
+    }
+
+    [hidden]{
+      display:none!important;
+    }
+  </style>
+
+  <script src="./config.js"></script>
+</head>
+
+<body>
+<header>
+  <div>
+    <h1>店舗管理画面</h1>
+    <p>ホテルマップ掲載情報の登録・編集</p>
+  </div>
+</header>
+
+<main>
+  <section class="card" id="loginCard">
+    <h2 style="margin-top:0;">管理者ログイン</h2>
+
+    <form id="loginForm">
+      <div class="field">
+        <label for="email">メールアドレス</label>
+        <input
+          type="email"
+          id="email"
+          autocomplete="username"
+          required
+        >
+      </div>
+
+      <div class="field">
+        <label for="password">パスワード</label>
+        <input
+          type="password"
+          id="password"
+          autocomplete="current-password"
+          required
+        >
+      </div>
+
+      <button
+        type="submit"
+        class="primary"
+        id="loginButton"
+      >
+        ログイン
+      </button>
+    </form>
+
+    <div class="message" id="loginMessage"></div>
+  </section>
+
+  <section class="card" id="adminCard" hidden>
+    <div class="admin-header">
+      <div>
+        <h2>管理者ページ</h2>
+        <div class="message" id="userInfo"></div>
+      </div>
+
+      <button
+        type="button"
+        class="secondary"
+        id="logoutButton"
+      >
+        ログアウト
+      </button>
+    </div>
+<button id="showCreateShopButton" type="button">
+  新規店舗を追加
+</button>
+
+<div id="createShopForm" class="placeholder" hidden>
+  <h2>新規店舗の追加</h2>
+
+  <label for="createShopId">
+    店舗ID
+  </label>
+  <input
+    id="createShopId"
+    type="text"
+    placeholder="例：sushi_hanamaru"
+  >
+
+  <p>
+    半角英数字とアンダーバーのみ。作成後は原則変更しません。
+  </p>
+
+  <label for="createShopName">
+    店舗名
+  </label>
+  <input
+    id="createShopName"
+    type="text"
+    placeholder="例：回転寿司 はなまる"
+  >
+
+  <label for="createShopCatchcopy">
+    キャッチコピー
+  </label>
+  <input
+    id="createShopCatchcopy"
+    type="text"
+    placeholder="例：北海道の新鮮な海の幸を楽しむ。"
+  >
+
+  <button id="createShopButton" type="button">
+    店舗を作成
+  </button>
+
+  <button id="cancelCreateShopButton" type="button">
+    キャンセル
+  </button>
+</div>
+    <div class="placeholder" id="shopListStatus">
+  店舗情報を読み込んでいます...
+</div>
+
+<div id="shopList"></div>
+<section class="placeholder" id="qrManagement">
+  <h2>QRルート管理</h2>
+
+  <button id="showCreateQrButton" type="button">
+    新規QRを追加
+  </button>
+
+  <div id="createQrForm" hidden>
+    <h3>新規QRの追加</h3>
+
+    <label for="createQrCode">QRコードID</label>
+    <input
+      id="createQrCode"
+      type="text"
+      placeholder="例：qr_hotela_minato_premium_2026summer"
+    >
+
+    <label for="createQrHotelId">ホテルID</label>
+    <input
+      id="createQrHotelId"
+      type="text"
+      placeholder="例：hotel_a"
+    >
+
+    <label for="createQrShopId">掲載店舗</label>
+    <select id="createQrShopId"></select>
+
+    <label for="createQrSlot">掲載枠</label>
+    <input
+      id="createQrSlot"
+      type="text"
+      value="standard"
+      placeholder="例：premium"
+    >
+
+    <label for="createQrEdition">掲載版</label>
+    <input
+      id="createQrEdition"
+      type="text"
+      value="current"
+      placeholder="例：2026_summer"
+    >
+
+    <label>
+      <input id="createQrEnabled" type="checkbox">
+      作成時から有効にする
+    </label>
+
+    <button id="createQrButton" type="button">
+      QRを作成
+    </button>
+
+    <button id="cancelCreateQrButton" type="button">
+      キャンセル
+    </button>
+  </div>
+
+  <p id="qrListStatus">
+    QR情報を読み込んでいます...
+  </p>
+
+  <div id="qrList"></div>
+</section>
+
+    <div id="editForm" class="placeholder" hidden>
+  <h2>店舗情報の編集</h2>
+
+  <label for="editName">店舗名</label>
+  <input id="editName" type="text">
+
+  <label for="editCatchcopy">キャッチコピー</label>
+  <input id="editCatchcopy" type="text">
+      <label for="editDescription">店舗紹介文</label>
+<textarea id="editDescription" rows="5"></textarea>
+
+<label for="editAddress">住所</label>
+<input id="editAddress" type="text">
+
+<label for="editHours">営業時間</label>
+<input id="editHours" type="text">
+      <h3>メイン画像</h3>
+
+<p class="message" id="heroFocusHint" hidden>
+  プレビュー内をクリックすると、その位置がサムネイルの中心(表示の基準点)になります。
+</p>
+
+<div id="heroPreviewWrap" hidden style="position:relative;display:inline-block;">
+  <img
+    id="editHeroPreview"
+    alt="店舗画像のプレビュー"
+    style="
+      display:block;
+      width:100%;
+      max-width:420px;
+      max-height:240px;
+      object-fit:cover;
+      border-radius:12px;
+      margin:8px 0 12px;
+      cursor:crosshair;
+      user-select:none;
+    "
+  >
+  <div
+    id="heroFocusMarker"
+    style="
+      position:absolute;
+      width:18px;
+      height:18px;
+      margin:-9px 0 6px -9px;
+      border-radius:50%;
+      border:2px solid white;
+      background:rgba(25,93,100,.85);
+      box-shadow:0 0 0 1px rgba(0,0,0,.35);
+      pointer-events:none;
+      top:50%;
+      left:50%;
+    "
+  ></div>
+</div>
+
+<label for="editHeroImage">
+  新しい画像を選択
+</label>
+
+<input
+  id="editHeroImage"
+  type="file"
+  accept="image/jpeg,image/png,image/webp"
+>
+
+<p>JPG・PNG・WebP、5MB以下</p>
+      <h3>予約</h3>
+
+<label for="editReservationUrl">予約ページURL</label>
+<input id="editReservationUrl" type="text">
+
+<label for="editReservationEnabled">予約ボタン</label>
+<select id="editReservationEnabled">
+  <option value="true">表示する</option>
+  <option value="false">表示しない</option>
+</select>
+
+<h3>地図</h3>
+
+<label for="editMapUrl">地図URL</label>
+<input id="editMapUrl" type="text">
+
+<label for="editMapEnabled">地図ボタン</label>
+<select id="editMapEnabled">
+  <option value="true">表示する</option>
+  <option value="false">表示しない</option>
+</select>
+
+<h3>Instagram</h3>
+
+<label for="editInstagramUrl">Instagram URL</label>
+<input id="editInstagramUrl" type="text">
+
+<label for="editInstagramEnabled">Instagramボタン</label>
+<select id="editInstagramEnabled">
+  <option value="true">表示する</option>
+  <option value="false">表示しない</option>
+</select>
+
+<h3>公式サイト</h3>
+
+<label for="editWebsiteUrl">公式サイトURL</label>
+<input id="editWebsiteUrl" type="text">
+
+<label for="editWebsiteEnabled">公式サイトボタン</label>
+<select id="editWebsiteEnabled">
+  <option value="true">表示する</option>
+  <option value="false">表示しない</option>
+</select>
+
+<h3>電話</h3>
+
+<label for="editPhoneValue">電話番号</label>
+<input id="editPhoneValue" type="text">
+
+<label for="editPhoneEnabled">電話ボタン</label>
+<select id="editPhoneEnabled">
+  <option value="true">表示する</option>
+  <option value="false">表示しない</option>
+</select>
+
+<label for="editStatus">公開状態</label>
+<select id="editStatus">
+  <option value="draft">下書き</option>
+  <option value="published">公開</option>
+  <option value="suspended">停止</option>
+</select>
+
+<label>
+  <input id="editEnabled" type="checkbox">
+  店舗ページを有効にする
+</label>
+      <button id="saveShopButton" type="button">
+    保存
+  </button>
+
+  <button id="cancelEditButton" type="button">
+    キャンセル
+  </button>
+</div>
+  </section>
+</main>
+
+<script type="module">
+import {
+  createClient
+} from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+const cfg =
+  window.SUPABASE_CONFIG || {};
+
+const loginCard =
+  document.getElementById("loginCard");
+
+const adminCard =
+  document.getElementById("adminCard");
+
+const loginForm =
+  document.getElementById("loginForm");
+
+const loginButton =
+  document.getElementById("loginButton");
+
+const loginMessage =
+  document.getElementById("loginMessage");
+
+const userInfo =
+  document.getElementById("userInfo");
+
+const logoutButton =
+  document.getElementById("logoutButton");
+
+if(!cfg.url || !cfg.anonKey){
+  loginMessage.textContent =
+    "Supabase接続設定が見つかりません。config.jsを確認してください。";
+
+  loginMessage.classList.add("error");
+
+  throw new Error(
+    "Supabase configuration is missing."
+  );
+}
+
+const supabase =
+  createClient(
+    cfg.url,
+    cfg.anonKey
+  );
+
+function showLogin(message = "", isError = false){
+  loginCard.hidden = false;
+  adminCard.hidden = true;
+
+  loginMessage.textContent = message;
+  loginMessage.classList.toggle(
+    "error",
+    isError
+  );
+}
+
+function showAdmin(user){
+  loginCard.hidden = true;
+  adminCard.hidden = false;
+
+  userInfo.textContent =
+    `ログイン中：${user.email || user.id}`;
+  loadShops();
+loadQrRoutes();
+}
+async function loadShops(){
+  const status =
+    document.getElementById("shopListStatus");
+
+  const shopList =
+    document.getElementById("shopList");
+
+  status.hidden = false;
+  status.classList.remove("error");
+  status.textContent =
+    "店舗情報を読み込んでいます...";
+
+  shopList.innerHTML = "";
+
+  const { data, error } = await supabase
+    .from("shops")
+    .select("id,status,enabled,content,actions,media,updated_at")
+    .order("updated_at", {
+      ascending: false
+    });
+
+  if(error){
+    console.error(error);
+
+    status.textContent =
+      `店舗情報の取得に失敗しました：${error.message}`;
+
+    status.classList.add("error");
+    return;
+  }
+
+  if(!data || data.length === 0){
+    status.textContent =
+      "登録されている店舗はありません。";
+    return;
+  }
+
+  status.hidden = true;
+
+  data.forEach(shop => {
+    const item =
+      document.createElement("div");
+
+    item.className = "placeholder";
+    item.style.marginTop = "12px";
+
+    const name =
+      shop.content?.ja?.name ||
+      shop.content?.en?.name ||
+      shop.id;
+
+    const title =
+      document.createElement("strong");
+
+    title.textContent = name;
+
+    item.appendChild(title);
+    item.appendChild(document.createElement("br"));
+    item.appendChild(
+      document.createTextNode(`店舗ID：${shop.id}`)
+    );
+    item.appendChild(document.createElement("br"));
+    item.appendChild(
+      document.createTextNode(`公開状態：${shop.status}`)
+    );
+    item.appendChild(document.createElement("br"));
+    item.appendChild(
+      document.createTextNode(
+        `有効：${shop.enabled ? "はい" : "いいえ"}`
+      )
+    );
+item.appendChild(document.createElement("br"));
+
+const editButton = document.createElement("button");
+editButton.type = "button";
+editButton.textContent = "編集";
+editButton.style.marginTop = "12px";
+
+editButton.addEventListener("click", () => {
+  const editForm =
+    document.getElementById("editForm");
+
+  const editName =
+    document.getElementById("editName");
+
+  const editCatchcopy =
+    document.getElementById("editCatchcopy");
+
+  const editDescription =
+  document.getElementById("editDescription");
+
+const editAddress =
+  document.getElementById("editAddress");
+
+const editHours =
+  document.getElementById("editHours");
+
+  const editStatus =
+  document.getElementById("editStatus");
+
+const editEnabled =
+  document.getElementById("editEnabled");
+  editForm.dataset.shopId = shop.id;
+
+  editName.value =
+    shop.content?.ja?.name || "";
+
+  editCatchcopy.value =
+    shop.content?.ja?.catchcopy || "";
+  editDescription.value =
+  shop.content?.ja?.description || "";
+
+editAddress.value =
+  shop.content?.ja?.address || "";
+
+editHours.value =
+  shop.content?.ja?.hours || "";
+
+  const heroPreviewWrap =
+  document.getElementById("heroPreviewWrap");
+
+const heroPreview =
+  document.getElementById("editHeroPreview");
+
+const heroImageInput =
+  document.getElementById("editHeroImage");
+
+const heroFocusHint =
+  document.getElementById("heroFocusHint");
+
+const heroFocusMarker =
+  document.getElementById("heroFocusMarker");
+
+const currentHero =
+  shop.media?.hero || "";
+
+const currentHeroFocus =
+  shop.media?.heroFocus || "50% 50%";
+
+editForm.dataset.currentHero =
+  currentHero;
+
+editForm.dataset.heroFocus =
+  currentHeroFocus;
+
+heroImageInput.value = "";
+
+function applyHeroFocusToUi(positionValue){
+  const [fx, fy] = positionValue
+    .split(" ")
+    .map(part => parseFloat(part) || 50);
+
+  heroPreview.style.objectPosition = positionValue;
+  heroFocusMarker.style.left = `${fx}%`;
+  heroFocusMarker.style.top = `${fy}%`;
+}
+
+if(currentHero){
+  heroPreview.src = currentHero;
+  heroPreviewWrap.hidden = false;
+  heroFocusHint.hidden = false;
+  applyHeroFocusToUi(currentHeroFocus);
+}else{
+  heroPreview.removeAttribute("src");
+  heroPreviewWrap.hidden = true;
+  heroFocusHint.hidden = true;
+}
+  document.getElementById("editReservationUrl").value =
+  shop.actions?.reservation?.url || "";
+
+document.getElementById("editReservationEnabled").value =
+  String(shop.actions?.reservation?.enabled === true);
+
+document.getElementById("editMapUrl").value =
+  shop.actions?.map?.url || "";
+
+document.getElementById("editMapEnabled").value =
+  String(shop.actions?.map?.enabled === true);
+
+document.getElementById("editInstagramUrl").value =
+  shop.actions?.instagram?.url || "";
+
+document.getElementById("editInstagramEnabled").value =
+  String(shop.actions?.instagram?.enabled === true);
+
+document.getElementById("editWebsiteUrl").value =
+  shop.actions?.website?.url || "";
+
+document.getElementById("editWebsiteEnabled").value =
+  String(shop.actions?.website?.enabled === true);
+
+document.getElementById("editPhoneValue").value =
+  shop.actions?.phone?.value || "";
+
+document.getElementById("editPhoneEnabled").value =
+  String(shop.actions?.phone?.enabled === true);
+  editStatus.value =
+  shop.status || "draft";
+
+editEnabled.checked =
+  shop.enabled === true;
+  editForm.hidden = false;
+
+  editForm.scrollIntoView({
+    behavior: "smooth"
+  });
+});
+
+const deleteButton = document.createElement("button");
+deleteButton.type = "button";
+deleteButton.className = "danger-btn";
+deleteButton.textContent = "削除";
+deleteButton.style.marginTop = "12px";
+deleteButton.style.marginLeft = "8px";
+
+deleteButton.addEventListener("click", async () => {
+  const confirmed = confirm(
+    `店舗「${name}」(ID: ${shop.id})を削除しますか？\n` +
+    `この操作は取り消せません。この店舗を参照しているQRコードは、` +
+    `以後「無効なQRコード」として表示されるようになります` +
+    `(QRコード自体や過去の計測データは削除されません)。`
+  );
+
+  if(!confirmed){
+    return;
+  }
+
+  deleteButton.disabled = true;
+  deleteButton.textContent = "削除中...";
+
+  const { error: deleteError } = await supabase
+    .from("shops")
+    .delete()
+    .eq("id", shop.id);
+
+  if(deleteError){
+    console.error(deleteError);
+
+    alert(
+      `削除に失敗しました：${deleteError.message}`
+    );
+
+    deleteButton.disabled = false;
+    deleteButton.textContent = "削除";
+    return;
+  }
+
+  alert("店舗を削除しました。");
+
+  await loadShops();
+  await loadQrRoutes();
+});
+
+item.appendChild(editButton);
+item.appendChild(deleteButton);
+    shopList.appendChild(item);
+  });
+}
+  document
+  .getElementById("saveShopButton")
+  .addEventListener("click", async () => {
+    const editForm =
+      document.getElementById("editForm");
+
+    const editName =
+      document.getElementById("editName");
+
+    const editCatchcopy =
+      document.getElementById("editCatchcopy");
+    const editDescription =
+  document.getElementById("editDescription");
+
+const editAddress =
+  document.getElementById("editAddress");
+
+const editHours =
+  document.getElementById("editHours");
+    const editStatus =
+  document.getElementById("editStatus");
+
+const editEnabled =
+  document.getElementById("editEnabled");
+    const saveButton =
+      document.getElementById("saveShopButton");
+
+    const shopId = editForm.dataset.shopId;
+    const name = editName.value.trim();
+    const catchcopy = editCatchcopy.value.trim();
+    const description =
+  editDescription.value.trim();
+
+const address =
+  editAddress.value.trim();
+
+const hours =
+  editHours.value.trim();const reservationUrl =
+  document.getElementById("editReservationUrl").value.trim();
+
+const reservationEnabled =
+  document.getElementById("editReservationEnabled").value === "true";
+
+const mapUrl =
+  document.getElementById("editMapUrl").value.trim();
+
+const mapEnabled =
+  document.getElementById("editMapEnabled").value === "true";
+
+const instagramUrl =
+  document.getElementById("editInstagramUrl").value.trim();
+
+const instagramEnabled =
+  document.getElementById("editInstagramEnabled").value === "true";
+
+const websiteUrl =
+  document.getElementById("editWebsiteUrl").value.trim();
+
+const websiteEnabled =
+  document.getElementById("editWebsiteEnabled").value === "true";
+
+const phoneValue =
+  document.getElementById("editPhoneValue").value.trim();
+
+const phoneEnabled =
+  document.getElementById("editPhoneEnabled").value === "true";
+
+    const heroFile =
+  document.getElementById("editHeroImage").files[0];
+
+const allowedImageTypes = [
+  "image/jpeg",
+  "image/png",
+  "image/webp"
+];
+
+if(
+  heroFile &&
+  !allowedImageTypes.includes(heroFile.type)
+){
+  alert("JPG・PNG・WebPの画像を選択してください。");
+  return;
+}
+
+if(
+  heroFile &&
+  heroFile.size > 5 * 1024 * 1024
+){
+  alert("画像は5MB以下にしてください。");
+  return;
+}
+    if(reservationEnabled && !reservationUrl){
+  alert("予約ボタンを表示する場合はURLを入力してください。");
+  return;
+}
+
+if(mapEnabled && !mapUrl){
+  alert("地図ボタンを表示する場合はURLを入力してください。");
+  return;
+}
+
+if(instagramEnabled && !instagramUrl){
+  alert("Instagramボタンを表示する場合はURLを入力してください。");
+  return;
+}
+
+if(websiteEnabled && !websiteUrl){
+  alert("公式サイトボタンを表示する場合はURLを入力してください。");
+  return;
+}
+
+if(phoneEnabled && !phoneValue){
+  alert("電話ボタンを表示する場合は電話番号を入力してください。");
+  return;
+}
+
+    const status = editStatus.value;
+const enabled = editEnabled.checked;
+
+    if(!shopId){
+      alert("編集する店舗が選択されていません。");
+      return;
+    }
+
+    if(!name){
+      alert("店舗名を入力してください。");
+      return;
+    }
+
+    saveButton.disabled = true;
+    saveButton.textContent = "保存中...";
+
+    try{
+      const {
+        data: shop,
+        error: readError
+      } = await supabase
+        .from("shops")
+        .select("content,actions,media")
+        .eq("id", shopId)
+        .single();
+
+      if(readError){
+        throw readError;
+      }
+let heroUrl =
+  editForm.dataset.currentHero || "";
+
+if(heroFile){
+  const extensionMap = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp"
+  };
+
+  const extension =
+    extensionMap[heroFile.type];
+
+  const filePath =
+    `${shopId}/hero-${Date.now()}.${extension}`;
+
+  const {
+    error: uploadError
+  } = await supabase.storage
+    .from("shop-images")
+    .upload(
+      filePath,
+      heroFile,
+      {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: heroFile.type
+      }
+    );
+
+  if(uploadError){
+    throw uploadError;
+  }
+
+  const {
+    data: publicUrlData
+  } = supabase.storage
+    .from("shop-images")
+    .getPublicUrl(filePath);
+
+  heroUrl =
+    publicUrlData.publicUrl;
+}
+
+const updatedMedia = {
+  ...(shop.media || {}),
+  hero: heroUrl,
+  heroFocus: editForm.dataset.heroFocus || "50% 50%"
+};
+      const updatedContent = {
+        ...(shop.content || {})
+      };
+
+     updatedContent.ja = {
+  ...(updatedContent.ja || {}),
+  name: name,
+  catchcopy: catchcopy,
+  description: description,
+  address: address,
+  hours: hours
+};
+const updatedActions = {
+  ...(shop.actions || {}),
+
+  reservation: {
+    ...(shop.actions?.reservation || {}),
+    url: reservationUrl,
+    enabled: reservationEnabled
+  },
+
+  map: {
+    ...(shop.actions?.map || {}),
+    url: mapUrl,
+    enabled: mapEnabled
+  },
+
+  instagram: {
+    ...(shop.actions?.instagram || {}),
+    url: instagramUrl,
+    enabled: instagramEnabled
+  },
+
+  website: {
+    ...(shop.actions?.website || {}),
+    url: websiteUrl,
+    enabled: websiteEnabled
+  },
+
+  phone: {
+    ...(shop.actions?.phone || {}),
+    value: phoneValue,
+    enabled: phoneEnabled
+  }
+};
+
+
+      const { error: updateError } =
+        await supabase
+          .from("shops")
+
+         .update({
+  content: updatedContent,
+  actions: updatedActions,
+  media: updatedMedia,
+  status: status,
+  enabled: enabled
+})
+        .eq("id", shopId);
+
+      if(updateError){
+        throw updateError;
+      }
+
+      alert("店舗情報を保存しました。");
+
+      editForm.hidden = true;
+
+      await loadShops();
+    }catch(error){
+      console.error(error);
+
+      alert(
+        `保存に失敗しました：${error.message}`
+      );
+    }finally{
+      saveButton.disabled = false;
+      saveButton.textContent = "保存";
+    }
+  });
+
+document
+  .getElementById("cancelEditButton")
+  .addEventListener("click", () => {
+    const editForm =
+      document.getElementById("editForm");
+
+    editForm.hidden = true;
+    editForm.dataset.shopId = "";
+  });
+
+  document
+  .getElementById("editHeroImage")
+  .addEventListener("change", event => {
+    const file = event.target.files[0];
+
+    const previewWrap =
+      document.getElementById("heroPreviewWrap");
+
+    const preview =
+      document.getElementById("editHeroPreview");
+
+    const heroFocusHint =
+      document.getElementById("heroFocusHint");
+
+    const heroFocusMarker =
+      document.getElementById("heroFocusMarker");
+
+    const editForm =
+      document.getElementById("editForm");
+
+    if(!file){
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.addEventListener("load", () => {
+      preview.src = reader.result;
+      previewWrap.hidden = false;
+      heroFocusHint.hidden = false;
+
+      // 新しい画像を選んだ場合は、位置指定を中央にリセットする。
+      editForm.dataset.heroFocus = "50% 50%";
+      preview.style.objectPosition = "50% 50%";
+      heroFocusMarker.style.left = "50%";
+      heroFocusMarker.style.top = "50%";
+    });
+
+    reader.readAsDataURL(file);
+  });
+
+  // プレビュー画像をクリックした位置を、サムネイルの基準点として保存する。
+  document
+    .getElementById("editHeroPreview")
+    .addEventListener("click", event => {
+      const editForm =
+        document.getElementById("editForm");
+
+      const heroFocusMarker =
+        document.getElementById("heroFocusMarker");
+
+      const img = event.currentTarget;
+      const rect = img.getBoundingClientRect();
+
+      const rawX =
+        ((event.clientX - rect.left) / rect.width) * 100;
+
+      const rawY =
+        ((event.clientY - rect.top) / rect.height) * 100;
+
+      const x = Math.max(0, Math.min(100, Math.round(rawX)));
+      const y = Math.max(0, Math.min(100, Math.round(rawY)));
+
+      const positionValue = `${x}% ${y}%`;
+
+      editForm.dataset.heroFocus = positionValue;
+      img.style.objectPosition = positionValue;
+
+      heroFocusMarker.style.left = `${x}%`;
+      heroFocusMarker.style.top = `${y}%`;
+    });
+
+  const showCreateShopButton =
+  document.getElementById("showCreateShopButton");
+
+const createShopForm =
+  document.getElementById("createShopForm");
+
+const createShopId =
+  document.getElementById("createShopId");
+
+const createShopName =
+  document.getElementById("createShopName");
+
+const createShopCatchcopy =
+  document.getElementById("createShopCatchcopy");
+
+const createShopButton =
+  document.getElementById("createShopButton");
+
+const cancelCreateShopButton =
+  document.getElementById("cancelCreateShopButton");
+
+showCreateShopButton.addEventListener("click", () => {
+  createShopForm.hidden = false;
+
+  createShopForm.scrollIntoView({
+    behavior: "smooth"
+  });
+
+  createShopId.focus();
+});
+
+cancelCreateShopButton.addEventListener("click", () => {
+  createShopForm.hidden = true;
+
+  createShopId.value = "";
+  createShopName.value = "";
+  createShopCatchcopy.value = "";
+});
+
+createShopButton.addEventListener("click", async () => {
+  const shopId =
+    createShopId.value.trim().toLowerCase();
+
+  const name =
+    createShopName.value.trim();
+
+  const catchcopy =
+    createShopCatchcopy.value.trim();
+
+  if(!shopId){
+    alert("店舗IDを入力してください。");
+    return;
+  }
+
+  if(!/^[a-z0-9_]+$/.test(shopId)){
+    alert(
+      "店舗IDは半角英数字とアンダーバーのみ使用できます。"
+    );
+    return;
+  }
+
+  if(!name){
+    alert("店舗名を入力してください。");
+    return;
+  }
+
+  createShopButton.disabled = true;
+  createShopButton.textContent = "作成中...";
+
+  try{
+    const { error } = await supabase
+      .from("shops")
+      .insert({
+        id: shopId,
+
+        status: "draft",
+        enabled: false,
+
+        media: {
+          hero: "",
+          heroFocus: "50% 50%"
+        },
+
+        content: {
+          ja: {
+            name: name,
+            catchcopy: catchcopy,
+            description: "",
+            address: "",
+            hours: ""
+          }
+        },
+
+        actions: {
+          reservation: {
+            url: "",
+            enabled: false
+          },
+
+          map: {
+            url: "",
+            enabled: false
+          },
+
+          instagram: {
+            url: "",
+            enabled: false
+          },
+
+          website: {
+            url: "",
+            enabled: false
+          },
+
+          phone: {
+            value: "",
+            enabled: false
+          }
+        },
+
+        coupon: {},
+        hotel_overrides: {}
+      });
+
+    if(error){
+      throw error;
+    }
+
+    alert(
+      "新規店舗を下書き状態で作成しました。"
+    );
+
+    createShopId.value = "";
+    createShopName.value = "";
+    createShopCatchcopy.value = "";
+
+    createShopForm.hidden = true;
+
+    await loadShops();
+  }catch(error){
+    console.error(error);
+
+    if(error.code === "23505"){
+      alert(
+        "同じ店舗IDが既に使用されています。"
+      );
+    }else{
+      alert(
+        `店舗の作成に失敗しました：${error.message}`
+      );
+    }
+  }finally{
+    createShopButton.disabled = false;
+    createShopButton.textContent = "店舗を作成";
+  }
+});
+
+  async function loadQrRoutes(){
+  const status =
+    document.getElementById("qrListStatus");
+
+  const qrList =
+    document.getElementById("qrList");
+
+  const shopSelect =
+    document.getElementById("createQrShopId");
+
+  status.hidden = false;
+  status.textContent =
+    "QR情報を読み込んでいます...";
+
+  qrList.replaceChildren();
+
+  const {
+    data: shops,
+    error: shopsError
+  } = await supabase
+    .from("shops")
+    .select("id,content")
+    .order("id", {
+      ascending: true
+    });
+
+  if(shopsError){
+    console.error(shopsError);
+
+    status.textContent =
+      `店舗情報の取得に失敗しました：${shopsError.message}`;
+
+    return;
+  }
+
+  shopSelect.replaceChildren();
+
+  const shopNameMap = new Map();
+
+  (shops || []).forEach(shop => {
+    const name =
+      shop.content?.ja?.name ||
+      shop.content?.en?.name ||
+      shop.id;
+
+    shopNameMap.set(shop.id, name);
+
+    const option =
+      document.createElement("option");
+
+    option.value = shop.id;
+    option.textContent =
+      `${name}（${shop.id}）`;
+
+    shopSelect.appendChild(option);
+  });
+
+  const {
+    data: routes,
+    error: routesError
+  } = await supabase
+    .from("qr_routes")
+    .select(
+      "qr_code,hotel_id,shop_id,slot,edition,enabled,updated_at"
+    )
+    .order("updated_at", {
+      ascending: false
+    });
+
+  if(routesError){
+    console.error(routesError);
+
+    status.textContent =
+      `QR情報の取得に失敗しました：${routesError.message}`;
+
+    return;
+  }
+
+  if(!routes || routes.length === 0){
+    status.textContent =
+      "登録されているQRはありません。";
+
+    return;
+  }
+
+  status.hidden = true;
+
+  routes.forEach(route => {
+    const card =
+      document.createElement("div");
+
+    card.className = "placeholder";
+    card.style.marginTop = "12px";
+
+    const title =
+      document.createElement("strong");
+
+    title.textContent = route.qr_code;
+
+    card.appendChild(title);
+
+    const information = [
+      `ホテル：${route.hotel_id}`,
+      `店舗：${shopNameMap.get(route.shop_id) || route.shop_id}`,
+      `店舗ID：${route.shop_id}`,
+      `掲載枠：${route.slot}`,
+      `掲載版：${route.edition}`,
+      `状態：${route.enabled ? "有効" : "無効"}`
+    ];
+
+    information.forEach(text => {
+      card.appendChild(
+        document.createElement("br")
+      );
+
+      card.appendChild(
+        document.createTextNode(text)
+      );
+    });
+
+    card.appendChild(
+      document.createElement("br")
+    );
+
+    const copyButton =
+      document.createElement("button");
+
+    copyButton.type = "button";
+    copyButton.textContent =
+      "URLをコピー";
+
+    copyButton.style.marginTop = "12px";
+    copyButton.style.marginRight = "8px";
+
+    copyButton.addEventListener(
+      "click",
+      async () => {
+        const qrUrl =
+          new URL(
+            "./index.html",
+            window.location.href
+          );
+
+        qrUrl.search = "";
+
+        qrUrl.searchParams.set(
+          "hotel",
+          route.hotel_id
+        );
+
+        qrUrl.searchParams.set(
+          "shop",
+          route.shop_id
+        );
+
+        qrUrl.searchParams.set(
+          "slot",
+          route.slot
+        );
+
+        qrUrl.searchParams.set(
+          "edition",
+          route.edition
+        );
+
+        qrUrl.searchParams.set(
+          "qr",
+          route.qr_code
+        );
+
+        try{
+          await navigator.clipboard.writeText(
+            qrUrl.toString()
+          );
+
+          alert("QR用URLをコピーしました。");
+        }catch(error){
+          console.error(error);
+
+          prompt(
+            "このURLをコピーしてください。",
+            qrUrl.toString()
+          );
+        }
+      }
+    );
+
+    const toggleButton =
+      document.createElement("button");
+
+    toggleButton.type = "button";
+
+    toggleButton.textContent =
+      route.enabled
+        ? "無効にする"
+        : "有効にする";
+
+    toggleButton.addEventListener(
+      "click",
+      async () => {
+        const nextEnabled =
+          !route.enabled;
+
+        const confirmed =
+          confirm(
+            `${route.qr_code}を${
+              nextEnabled ? "有効" : "無効"
+            }にしますか？`
+          );
+
+        if(!confirmed){
+          return;
+        }
+
+        toggleButton.disabled = true;
+
+        const { error } = await supabase
+          .from("qr_routes")
+          .update({
+            enabled: nextEnabled,
+            updated_at:
+              new Date().toISOString()
+          })
+          .eq(
+            "qr_code",
+            route.qr_code
+          );
+
+        if(error){
+          console.error(error);
+
+          alert(
+            `変更に失敗しました：${error.message}`
+          );
+
+          toggleButton.disabled = false;
+          return;
+        }
+
+        await loadQrRoutes();
+      }
+    );
+
+    card.appendChild(copyButton);
+    card.appendChild(toggleButton);
+
+    qrList.appendChild(card);
+  });
+}
+
+const showCreateQrButton =
+  document.getElementById(
+    "showCreateQrButton"
+  );
+
+const createQrForm =
+  document.getElementById(
+    "createQrForm"
+  );
+
+const createQrCode =
+  document.getElementById(
+    "createQrCode"
+  );
+
+const createQrHotelId =
+  document.getElementById(
+    "createQrHotelId"
+  );
+
+const createQrShopId =
+  document.getElementById(
+    "createQrShopId"
+  );
+
+const createQrSlot =
+  document.getElementById(
+    "createQrSlot"
+  );
+
+const createQrEdition =
+  document.getElementById(
+    "createQrEdition"
+  );
+
+const createQrEnabled =
+  document.getElementById(
+    "createQrEnabled"
+  );
+
+const createQrButton =
+  document.getElementById(
+    "createQrButton"
+  );
+
+const cancelCreateQrButton =
+  document.getElementById(
+    "cancelCreateQrButton"
+  );
+
+showCreateQrButton.addEventListener(
+  "click",
+  () => {
+    createQrForm.hidden = false;
+
+    createQrForm.scrollIntoView({
+      behavior: "smooth"
+    });
+
+    createQrCode.focus();
+  }
+);
+
+cancelCreateQrButton.addEventListener(
+  "click",
+  () => {
+    createQrForm.hidden = true;
+
+    createQrCode.value = "";
+    createQrHotelId.value = "";
+    createQrSlot.value = "standard";
+    createQrEdition.value = "current";
+    createQrEnabled.checked = false;
+  }
+);
+
+createQrButton.addEventListener(
+  "click",
+  async () => {
+    const qrCode =
+      createQrCode.value
+        .trim()
+        .toLowerCase();
+
+    const hotelId =
+      createQrHotelId.value
+        .trim()
+        .toLowerCase();
+
+    const shopId =
+      createQrShopId.value;
+
+    const slot =
+      createQrSlot.value
+        .trim()
+        .toLowerCase();
+
+    const edition =
+      createQrEdition.value
+        .trim()
+        .toLowerCase();
+
+    const enabled =
+      createQrEnabled.checked;
+
+    if(
+      !qrCode ||
+      !hotelId ||
+      !shopId ||
+      !slot ||
+      !edition
+    ){
+      alert(
+        "すべての項目を入力してください。"
+      );
+
+      return;
+    }
+
+    const idPattern =
+      /^[a-z0-9_]+$/;
+
+    if(
+      !idPattern.test(qrCode) ||
+      !idPattern.test(hotelId) ||
+      !idPattern.test(slot) ||
+      !idPattern.test(edition)
+    ){
+      alert(
+        "ID・掲載枠・掲載版は、半角英数字とアンダーバーのみ使用できます。"
+      );
+
+      return;
+    }
+
+    createQrButton.disabled = true;
+    createQrButton.textContent =
+      "作成中...";
+
+    try{
+      const { error } = await supabase
+        .from("qr_routes")
+        .insert({
+          qr_code: qrCode,
+          hotel_id: hotelId,
+          shop_id: shopId,
+          slot: slot,
+          edition: edition,
+          enabled: enabled
+        });
+
+      if(error){
+        throw error;
+      }
+
+      alert(
+        "新規QRルートを作成しました。"
+      );
+
+      createQrCode.value = "";
+      createQrHotelId.value = "";
+      createQrSlot.value = "standard";
+      createQrEdition.value = "current";
+      createQrEnabled.checked = false;
+
+      createQrForm.hidden = true;
+
+      await loadQrRoutes();
+    }catch(error){
+      console.error(error);
+
+      if(error.code === "23505"){
+        alert(
+          "同じQRコードIDが既に登録されています。"
+        );
+      }else{
+        alert(
+          `QRの作成に失敗しました：${error.message}`
+        );
+      }
+    }finally{
+      createQrButton.disabled = false;
+      createQrButton.textContent =
+        "QRを作成";
+    }
+  }
+);
+  async function verifyAdmin(){
+  const {
+    data: userData,
+    error: userError
+  } = await supabase.auth.getUser();
+
+  if(userError || !userData.user){
+    showLogin();
+    return;
+  }
+
+  const {
+    data: isAdmin,
+    error: adminError
+  } = await supabase.rpc("is_admin");
+
+  if(adminError){
+    console.error(adminError);
+
+    await supabase.auth.signOut();
+
+    showLogin(
+      `管理者判定に失敗しました：${adminError.message}`,
+      true
+    );
+
+    return;
+  }
+
+  if(isAdmin !== true){
+    await supabase.auth.signOut();
+
+    showLogin(
+      "このアカウントには管理者権限がありません。",
+      true
+    );
+
+    return;
+  }
+
+  showAdmin(userData.user);
+}
+
+loginForm.addEventListener(
+  "submit",
+  async event => {
+    event.preventDefault();
+
+    loginButton.disabled = true;
+    loginButton.textContent =
+      "ログイン中...";
+
+    loginMessage.textContent = "";
+    loginMessage.classList.remove("error");
+
+    const email =
+      document
+        .getElementById("email")
+        .value
+        .trim();
+
+    const password =
+      document
+        .getElementById("password")
+        .value;
+
+    const {
+      error
+    } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if(error){
+      showLogin(
+        `ログインに失敗しました：${error.message}`,
+        true
+      );
+
+      loginButton.disabled = false;
+      loginButton.textContent =
+        "ログイン";
+
+      return;
+    }
+
+    await verifyAdmin();
+
+    loginButton.disabled = false;
+    loginButton.textContent =
+      "ログイン";
+  }
+);
+
+logoutButton.addEventListener(
+  "click",
+  async () => {
+    await supabase.auth.signOut();
+
+    showLogin(
+      "ログアウトしました。"
+    );
+  }
+);
+
+verifyAdmin().catch(error => {
+  console.error(error);
+
+  showLogin(
+    "認証処理中にエラーが発生しました。",
+    true
+  );
+});
+</script>
+</body>
+</html>

@@ -3,152 +3,1272 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>札幌ホテルマップ 計測ページ</title>
+
+  <title>札幌ホテルマップ</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&display=swap" rel="stylesheet">
+
   <style>
-    :root{--bg:#f6f3ee;--card:#fff;--ink:#202020;--muted:#666;--line:#ded7cc;--accent:#195d64;--accent2:#b46927;--red:#963d35}
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif}
-    header{background:linear-gradient(135deg,#195d64,#2a7b83);color:white;padding:24px 18px 18px}
-    h1{margin:8px 0;font-size:25px;line-height:1.25}
-    header p{margin:0;font-size:14px;line-height:1.7;opacity:.94}
-    .small{font-size:12px;opacity:.88;letter-spacing:.08em}
-    main{max-width:1040px;margin:0 auto;padding:18px;display:grid;grid-template-columns:1fr;gap:16px}
-    @media(min-width:880px){main{grid-template-columns:1fr 340px}}
-    .card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 12px 30px rgba(20,10,0,.06);padding:16px}
-    .shop{display:grid;gap:14px}
-    @media(min-width:680px){.shop{grid-template-columns:260px 1fr}}
-    .photo{min-height:220px;border-radius:16px;background:linear-gradient(135deg,#d7eef3,#fff5e6);display:grid;place-items:center;color:#33636a;font-size:28px;font-weight:800;position:relative;overflow:hidden}
-    .photo:after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.42);right:-80px;bottom:-80px}
-    .badge{display:inline-flex;border-radius:999px;background:#fff2dc;color:#8b4e17;font-size:12px;font-weight:800;padding:5px 10px;margin:2px 5px 2px 0}
-    .tag{display:inline-flex;border-radius:999px;background:#f3f0ea;color:#514a42;font-size:12px;padding:6px 9px;margin:3px 4px 3px 0;border:1px solid #ebe4da}
-    .muted{color:var(--muted);font-size:13px;line-height:1.75}
-    .desc{font-size:14px;line-height:1.85;color:#3d3832}
-    .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
-    button,a.btn{appearance:none;border:1px solid var(--line);border-radius:999px;background:white;color:var(--ink);text-decoration:none;font-size:14px;padding:11px 14px;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:6px}
-    .primary{background:var(--accent);border-color:var(--accent);color:white!important}
-    .orange{background:#fff5e8;border-color:#f1d6af;color:#8b4e17!important}
-    .green{background:#eff8f6;border-color:#cde4df;color:#195d64!important}
-    .danger{background:#fff1ef;border-color:#ebc6c1;color:#963d35!important}
-    .box{background:#fbfaf7;border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:12px}
-    .kv{display:grid;grid-template-columns:110px 1fr;gap:8px;font-size:13px;line-height:1.55;border-bottom:1px solid #eee8de;padding:8px 0}
-    .kv:last-child{border-bottom:none}
-    code{background:#f0ece5;padding:2px 5px;border-radius:5px;font-size:12px}
-    aside{position:sticky;top:12px;align-self:start}
-    .coupon{display:none;background:#fffaf0;border:1px dashed #d39e58;border-radius:14px;padding:12px;margin-top:12px;color:#6f4516;font-size:13px;line-height:1.7}
-    .coupon.show{display:block}
-    .topnav{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:12px}
-    .topnav a{font-size:13px;color:var(--accent);font-weight:800;text-decoration:none}
-    .notice{background:#fff8ed;border:1px solid #eed3ab;border-radius:14px;padding:12px;color:#704c1d;font-size:13px;line-height:1.75;margin-bottom:14px}
-    .status{font-size:12px;line-height:1.7;color:#555;margin-top:10px}
+    :root{
+      --bg:#f7f4ee;
+      --card:#fffdf9;
+      --ink:#211f1a;
+      --muted:#7a7263;
+      --line:#e6ddca;
+      --accent:#8a6a30;
+      --accent-ink:#5c4720;
+      --accent-soft:#f3ead4;
+      --forest:#33443a;
+      --red:#8c4a3d;
+      --font-heading:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+    }
+
+    *{
+      box-sizing:border-box;
+    }
+
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--ink);
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Hiragino Sans",
+        "Yu Gothic",
+        "Noto Sans JP",
+        sans-serif;
+      -webkit-font-smoothing:antialiased;
+    }
+
+    [hidden]{
+      display:none!important;
+    }
+
+    header{
+      background:linear-gradient(135deg,#211f1a,#33443a 130%);
+      color:#f7f4ee;
+      padding:26px 20px 22px;
+    }
+
+    .header-inner{
+      max-width:1040px;
+      margin:0 auto;
+    }
+
+    h1{
+      margin:10px 0;
+      font-family:var(--font-heading);
+      font-size:26px;
+      font-weight:600;
+      line-height:1.4;
+      letter-spacing:.02em;
+    }
+
+    h2{
+      font-family:var(--font-heading);
+      font-weight:600;
+      letter-spacing:.02em;
+    }
+
+    header p{
+      margin:0;
+      font-size:13.5px;
+      line-height:1.7;
+      color:#d9d3c4;
+    }
+
+    .small{
+      font-size:11px;
+      opacity:.85;
+      letter-spacing:.18em;
+      color:#cdb679;
+      font-weight:700;
+    }
+
+    main{
+      max-width:1040px;
+      margin:0 auto;
+      padding:20px 18px 6px;
+      display:grid;
+      grid-template-columns:1fr;
+      gap:16px;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:14px;
+      box-shadow:0 14px 32px rgba(33,31,26,.06);
+      padding:18px;
+    }
+
+    .shop{
+      display:grid;
+      gap:20px;
+    }
+
+    @media(min-width:720px){
+      .shop{
+        grid-template-columns:minmax(260px,360px) 1fr;
+      }
+    }
+
+    .photo{
+      min-height:260px;
+      border-radius:10px;
+      background:linear-gradient(135deg,var(--accent-soft),#eee4cd);
+      display:grid;
+      place-items:center;
+      color:var(--accent-ink);
+      font-size:22px;
+      font-weight:700;
+      letter-spacing:.03em;
+      position:relative;
+      overflow:hidden;
+      background-size:cover;
+      background-position:center;
+    }
+
+    .photo.has-image{
+      color:white;
+      text-shadow:0 2px 12px rgba(0,0,0,.5);
+    }
+
+    .photo.has-image::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(
+        to top,
+        rgba(0,0,0,.45),
+        rgba(0,0,0,.02) 60%
+      );
+    }
+
+    .photo span{
+      position:relative;
+      z-index:1;
+    }
+
+    .badge-list{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-bottom:8px;
+    }
+
+    .badge{
+      display:inline-flex;
+      border-radius:3px;
+      background:var(--accent-soft);
+      color:var(--accent-ink);
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:.04em;
+      padding:5px 9px;
+      text-transform:uppercase;
+    }
+
+    .catchcopy{
+      margin:14px 0 6px;
+      font-family:var(--font-heading);
+      font-size:19px;
+      line-height:1.7;
+      font-weight:600;
+      letter-spacing:.02em;
+      color:var(--forest);
+    }
+
+    .muted{
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.75;
+    }
+
+    .desc{
+      font-size:14px;
+      line-height:1.9;
+      color:#3c372f;
+    }
+
+    .tag-list{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin:12px 0;
+    }
+
+    .tag{
+      display:inline-flex;
+      border-radius:999px;
+      background:#fff;
+      color:#615a4c;
+      font-size:12px;
+      padding:6px 10px;
+      border:1px solid var(--line);
+    }
+
+    .details{
+      display:grid;
+      gap:0;
+      margin-top:16px;
+      background:#fbf8f2;
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:4px 14px;
+    }
+
+    .detail-row{
+      display:grid;
+      grid-template-columns:90px 1fr;
+      gap:10px;
+      padding:11px 0;
+      border-bottom:1px solid #ece3d1;
+      font-size:13px;
+      line-height:1.6;
+    }
+
+    .detail-row:last-child{
+      border-bottom:none;
+    }
+
+    .detail-row b{
+      color:#847c6a;
+      font-weight:700;
+      letter-spacing:.02em;
+    }
+
+    .actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:18px;
+    }
+
+    button,
+    a.btn{
+      appearance:none;
+      border:1px solid var(--line);
+      border-radius:3px;
+      background:white;
+      color:var(--ink);
+      text-decoration:none;
+      font-size:13.5px;
+      letter-spacing:.02em;
+      padding:12px 16px;
+      cursor:pointer;
+      font-weight:700;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      transition:opacity .15s ease;
+    }
+
+    button:disabled{
+      opacity:.5;
+      cursor:default;
+    }
+
+    button:not(:disabled):hover{
+      opacity:.88;
+    }
+
+    .primary{
+      background:var(--accent);
+      border-color:var(--accent);
+      color:white!important;
+    }
+
+    .green{
+      background:white;
+      border-color:var(--line);
+      color:var(--forest)!important;
+    }
+
+    .orange{
+      background:white;
+      border-color:var(--line);
+      color:var(--accent-ink)!important;
+    }
+
+    .danger{
+      background:#fbf1ee;
+      border-color:#e6cec6;
+      color:var(--red)!important;
+    }
+
+    .coupon{
+      display:none;
+      background:var(--accent-soft);
+      border:1px dashed var(--accent);
+      border-radius:10px;
+      padding:14px;
+      margin-top:16px;
+      color:var(--accent-ink);
+      font-size:14px;
+      line-height:1.8;
+    }
+
+    .coupon.show{
+      display:block;
+    }
+
+    .gallery{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:8px;
+      margin-top:16px;
+    }
+
+    @media(min-width:600px){
+      .gallery{
+        grid-template-columns:repeat(3,1fr);
+      }
+    }
+
+    .gallery img{
+      width:100%;
+      height:130px;
+      object-fit:cover;
+      border-radius:8px;
+      border:1px solid var(--line);
+      background:#eee;
+    }
+
+    .error-card{
+      text-align:center;
+      padding:40px 20px;
+    }
+
+    .error-card h2{
+      margin-top:0;
+    }
+
+    .debug-panel{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:16px;
+    }
+
+    .debug-box{
+      background:#fbf8f2;
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:12px;
+      margin-top:12px;
+    }
+
+    .kv{
+      display:grid;
+      grid-template-columns:100px 1fr;
+      gap:8px;
+      padding:8px 0;
+      border-bottom:1px solid #ece3d1;
+      font-size:13px;
+      line-height:1.55;
+      overflow-wrap:anywhere;
+    }
+
+    .kv:last-child{
+      border-bottom:none;
+    }
+
+    .status{
+      color:#7a7263;
+      font-size:12px;
+      line-height:1.7;
+      overflow-wrap:anywhere;
+    }
+
+    code{
+      background:var(--accent-soft);
+      padding:2px 5px;
+      border-radius:4px;
+      font-size:12px;
+    }
+
+    .header-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .language-button{
+      appearance:none;
+      border:1px solid rgba(247,244,238,.35);
+      border-radius:3px;
+      background:rgba(247,244,238,.08);
+      color:#f7f4ee;
+      padding:9px 13px;
+      font-size:12.5px;
+      font-weight:700;
+      letter-spacing:.02em;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+
+    .language-screen{
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      background:rgba(26,24,20,.94);
+    }
+
+    .language-card{
+      position:relative;
+      width:min(100%,440px);
+      padding:30px 22px 24px;
+      border-radius:14px;
+      background:#fffdf9;
+      box-shadow:0 24px 70px rgba(0,0,0,.35);
+      text-align:center;
+    }
+
+    .language-card h2{
+      margin:0 0 6px;
+      font-size:21px;
+      color:var(--ink);
+    }
+
+    .language-card p{
+      margin:0 0 22px;
+      color:var(--muted);
+      font-size:13.5px;
+    }
+
+    .language-list{
+      display:grid;
+      gap:10px;
+    }
+
+    .language-choice{
+      width:100%;
+      min-height:50px;
+      border:1px solid var(--line);
+      border-radius:6px;
+      background:white;
+      font-size:15px;
+      font-weight:700;
+      color:var(--ink);
+      cursor:pointer;
+    }
+
+    .language-choice:hover{
+      border-color:var(--accent);
+      background:var(--accent-soft);
+    }
+
+    .language-close{
+      position:absolute;
+      top:12px;
+      right:14px;
+      width:34px;
+      height:34px;
+      padding:0;
+      border:none;
+      border-radius:50%;
+      background:#f0ebdd;
+      color:var(--ink);
+      font-size:19px;
+      cursor:pointer;
+    }
+
+    footer{
+      max-width:1040px;
+      margin:8px auto 0;
+      padding:22px 18px 34px;
+      text-align:center;
+    }
+
+    footer p{
+      margin:0;
+      font-size:11px;
+      letter-spacing:.03em;
+      color:#a89f8c;
+    }
+
+    footer p strong{
+      color:#8a8067;
+      font-weight:700;
+    }
   </style>
+
+  <!-- 店舗情報 -->
+  <script src="./data.js"></script>
+
+  <!-- Supabase接続情報 -->
   <script src="./config.js"></script>
 </head>
+
 <body>
-<header>
-  <div class="small">HOTEL PAPER MAP → QR → OWNED PAGE → RESERVATION LINK</div>
-  <h1>札幌ホテルマップ 計測ページ</h1>
-  <p>スマホでQRを読むと、このページが開き、SupabaseにQR読取・ページ閲覧・予約クリックを保存します。</p>
+<div class="language-screen" id="languageScreen" hidden>
+  <div class="language-card">
+    <button
+      type="button"
+      class="language-close"
+      id="closeLanguageButton"
+      aria-label="閉じる"
+    >
+      ×
+    </button>
+
+    <h2>言語を選択してください</h2>
+    <p>Please select your language</p>
+
+    <div class="language-list">
+      <button type="button" class="language-choice" data-language="ja">
+        日本語
+      </button>
+
+      <button type="button" class="language-choice" data-language="en">
+        English
+      </button>
+
+      <button type="button" class="language-choice" data-language="zh-cn">
+        简体中文
+      </button>
+
+      <button type="button" class="language-choice" data-language="zh-tw">
+        繁體中文
+      </button>
+
+      <button type="button" class="language-choice" data-language="ko">
+        한국어
+      </button>
+    </div>
+  </div>
+</div>
+
+  <header>
+  <div class="header-inner">
+
+    <div class="header-top">
+  <div class="small">
+    SAPPORO HOTEL RESTAURANT GUIDE
+  </div>
+
+  <button
+    type="button"
+    class="language-button"
+    id="languageButton"
+  >
+    🌐 Language
+  </button>
+</div>
+
+
+
+    <h1 id="pageTitle">
+      札幌ホテルマップ
+    </h1>
+
+    <p id="pageSubtitle">
+      ホテル周辺のおすすめ飲食店をご紹介します。
+    </p>
+  </div>
 </header>
 
 <main>
   <section>
-    <div class="topnav">
-      <a href="demo_links.html">← QR/仮URL一覧</a>
-      <a href="report.html">計測レポートを見る →</a>
-    </div>
-    <div class="notice">
-      本番では「予約ページへ」の遷移先を、TableCheck / Google予約 / 食べログ / ホットペッパー / 店舗公式予約ページなどに差し替えます。
-      このMVPでは、まず予約クリックを保存してから仮予約ページへ送ります。
+    <div class="error-card card" id="errorCard" hidden>
+      <h2>店舗情報が見つかりません</h2>
+      <p class="muted" id="errorMessage"></p>
     </div>
 
-    <article class="card shop">
-      <div class="photo">海鮮</div>
+    <article class="card shop" id="shopCard" hidden>
       <div>
-        <span class="badge">プレミアム掲載</span>
-        <span class="badge">インバウンド対応想定</span>
-        <h2 style="margin:10px 0 4px;font-size:24px;">北海炉端 みなと</h2>
-        <div class="muted">Seafood Robata Minato / 札幌駅・大通周辺 / 徒歩7分</div>
-        <div style="margin:12px 0;">
-          <span class="tag">海鮮</span><span class="tag">刺身</span><span class="tag">北海道地酒</span><span class="tag">英語メニュー</span><span class="tag">カード可</span>
+        <div class="photo" id="heroImage">
+          <span id="heroFallback"></span>
         </div>
-        <p class="desc">
-          札幌に泊まる観光客・出張客向けの海鮮居酒屋。紙マップでは伝えきれない写真・予算・営業時間・予約導線を自社ページで補い、
-          予約クリックや地図遷移を広告KPIとして計測する想定です。
-        </p>
+
+        <div class="gallery" id="gallery" hidden></div>
+      </div>
+
+      <div>
+        <div class="badge-list" id="badgeList"></div>
+
+        <h2
+          id="shopName"
+          style="margin:8px 0 4px;font-size:25px;font-weight:700;"
+        ></h2>
+
+        <div class="muted" id="shopMeta"></div>
+
+        <p class="catchcopy" id="catchcopy"></p>
+
+        <div class="tag-list" id="tagList"></div>
+
+        <p class="desc" id="description"></p>
+
+        <div class="details">
+          <div class="detail-row" id="priceRow">
+            <b id="priceLabel">予算</b>
+            <span id="price"></span>
+          </div>
+
+          <div class="detail-row" id="hoursRow">
+            <b id="hoursLabel">営業時間</b>
+            <span id="hours"></span>
+          </div>
+
+          <div class="detail-row" id="closedRow">
+            <b id="closedLabel">定休日</b>
+            <span id="closed"></span>
+          </div>
+        </div>
 
         <div class="actions">
-          <button class="primary" id="reserveBtn">予約ページへ</button>
-          <button class="green" id="mapBtn">Googleマップを見る</button>
-          <button class="orange" id="phoneBtn">電話する</button>
-          <button class="danger" id="couponBtn">ホテル限定クーポン</button>
+          <button class="primary" id="reserveBtn" hidden>
+            予約ページへ
+          </button>
+
+          <button class="green" id="mapBtn" hidden>
+            Googleマップを見る
+          </button>
+
+          <button class="orange" id="phoneBtn" hidden>
+            電話する
+          </button>
+
+          <button class="green" id="instagramBtn" hidden>
+            Instagram
+          </button>
+
+          <button class="green" id="websiteBtn" hidden>
+            公式サイト
+          </button>
+
+          <button class="danger" id="couponBtn" hidden>
+            ホテル限定クーポン
+          </button>
         </div>
 
         <div class="coupon" id="couponBox">
-          ホテルマップ限定：会計5%OFF<br>
-          クーポンコード：<strong>HOTELMAP</strong><br>
-          実運用では「クーポン表示数」「店頭提示数」を実来店に近い指標として使えます。
+          <div id="couponText"></div>
+          <div id="couponCodeWrap" hidden>
+            クーポンコード：
+            <strong id="couponCode"></strong>
+          </div>
         </div>
       </div>
     </article>
   </section>
 
-  <aside class="card">
-    <h2 style="margin-top:0;">QR流入情報</h2>
-    <div class="box" id="qrInfo"></div>
-    <div class="box">
-      <h3 style="margin:0 0 8px;font-size:15px;">保存ステータス</h3>
-      <div class="status" id="status">初期化中...</div>
-    </div>
-    <div class="box">
-      <h3 style="margin:0 0 8px;font-size:15px;">保存するKPI</h3>
-      <div class="muted">
-        <code>qr_scan</code> QR読取<br>
-        <code>page_view</code> ページ閲覧<br>
-        <code>reserve_click</code> 予約クリック<br>
-        <code>map_click</code> 地図クリック<br>
-        <code>phone_click</code> 電話クリック<br>
-        <code>coupon_view</code> クーポン表示
+  <aside class="debug-panel" id="debugPanel" hidden>
+    <h2 style="margin-top:0;font-size:18px;">
+      動作確認情報
+    </h2>
+
+    <div class="debug-box" id="qrInfo"></div>
+
+    <div class="debug-box">
+      <h3 style="margin:0 0 8px;font-size:15px;">
+        保存ステータス
+      </h3>
+
+      <div class="status" id="status">
+        初期化中...
       </div>
     </div>
   </aside>
 </main>
 
-<script type="module">
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+<footer>
+  <p>Powered by <strong>株式会社BLANCO.</strong></p>
+</footer>
 
-const params = new URLSearchParams(location.search);
-const ctx = {
-  hotel_id: params.get("hotel") || "hotel_a",
-  hotel_name: params.get("hotel_name") || (params.get("hotel") === "hotel_b" ? "ホテルB" : "ホテルA"),
-  shop_id: params.get("shop") || "minato",
-  shop_name: "北海炉端 みなと",
-  slot: params.get("slot") || "premium",
-  edition: params.get("edition") || "2026_summer",
-  qr_id: params.get("qr") || "qr_hotelA_minato_premium_2026summer"
+<script type="module">
+import { createClient }
+  from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+const UI_TEXT = {
+  ja: {
+    pageTitle: "札幌ホテルマップ",
+    pageSubtitle: "ホテル周辺のおすすめ飲食店をご紹介します。",
+    reserve: "予約ページへ",
+    map: "Googleマップを見る",
+    phone: "電話する",
+    instagram: "Instagram",
+    website: "公式サイト",
+    coupon: "ホテル限定クーポン",
+    price: "予算",
+    hours: "営業時間",
+    closed: "定休日",
+    couponCode: "クーポンコード",
+    premium: "プレミアム掲載",
+    inbound: "インバウンド対応",
+    notFound: "指定された店舗IDは登録されていません。"
+  },
+
+  en: {
+    pageTitle: "Sapporo Hotel Map",
+    pageSubtitle: "Discover recommended restaurants near your hotel.",
+    reserve: "Make a reservation",
+    map: "View on Google Maps",
+    phone: "Call",
+    instagram: "Instagram",
+    website: "Official website",
+    coupon: "Hotel guest coupon",
+    price: "Price",
+    hours: "Opening hours",
+    closed: "Closed",
+    couponCode: "Coupon code",
+    premium: "Premium listing",
+    inbound: "International visitors welcome",
+    notFound: "The specified restaurant could not be found."
+  },
+
+  "zh-cn": {
+    pageTitle: "札幌酒店美食地图",
+    pageSubtitle: "为您介绍酒店附近值得推荐的餐厅。",
+    reserve: "前往预约",
+    map: "查看Google地图",
+    phone: "拨打电话",
+    instagram: "Instagram",
+    website: "官方网站",
+    coupon: "酒店客人优惠券",
+    price: "价格",
+    hours: "营业时间",
+    closed: "休息日",
+    couponCode: "优惠码",
+    premium: "高级推荐",
+    inbound: "欢迎海外游客",
+    notFound: "未找到指定的餐厅。"
+  },
+
+  "zh-tw": {
+    pageTitle: "札幌飯店美食地圖",
+    pageSubtitle: "為您介紹飯店附近值得推薦的餐廳。",
+    reserve: "前往預約",
+    map: "查看Google地圖",
+    phone: "撥打電話",
+    instagram: "Instagram",
+    website: "官方網站",
+    coupon: "飯店旅客優惠券",
+    price: "價格",
+    hours: "營業時間",
+    closed: "公休日",
+    couponCode: "優惠碼",
+    premium: "精選推薦",
+    inbound: "歡迎海外旅客",
+    notFound: "找不到指定的餐廳。"
+  },
+
+  ko: {
+    pageTitle: "삿포로 호텔 맛집 지도",
+    pageSubtitle: "호텔 주변의 추천 음식점을 소개합니다.",
+    reserve: "예약 페이지로 이동",
+    map: "Google 지도 보기",
+    phone: "전화하기",
+    instagram: "Instagram",
+    website: "공식 웹사이트",
+    coupon: "호텔 투숙객 쿠폰",
+    price: "가격",
+    hours: "영업시간",
+    closed: "휴무일",
+    couponCode: "쿠폰 코드",
+    premium: "프리미엄 게재",
+    inbound: "해외 관광객 환영",
+    notFound: "지정한 음식점을 찾을 수 없습니다."
+  }
 };
 
-const statusEl = document.getElementById("status");
-const cfg = window.SUPABASE_CONFIG || {};
-const isConfigured = cfg.url && cfg.anonKey && !cfg.url.includes("PASTE_") && !cfg.anonKey.includes("PASTE_");
-const supabase = isConfigured ? createClient(cfg.url, cfg.anonKey) : null;
+const params = new URLSearchParams(location.search);
+const appData = window.APP_DATA || {};
+const settings = appData.settings || {};
+const hotels = appData.hotels || {};
+// 注記: 以前ここに `const shops = appData.shops || {};` がありましたが、
+// この変数はどこからも参照されていなかった(実際の店舗データは
+// fetchShopFromSupabase() 経由でSupabaseから取得)ため削除しました。
 
-function renderQRInfo(){
-  document.getElementById("qrInfo").innerHTML = `
-    <div class="kv"><b>ホテル</b><span>${ctx.hotel_name} / ${ctx.hotel_id}</span></div>
-    <div class="kv"><b>店舗</b><span>${ctx.shop_name} / ${ctx.shop_id}</span></div>
-    <div class="kv"><b>掲載枠</b><span>${ctx.slot}</span></div>
-    <div class="kv"><b>版</b><span>${ctx.edition}</span></div>
-    <div class="kv"><b>QR ID</b><span>${ctx.qr_id}</span></div>
-  `;
+const supportedLanguages =
+  settings.supportedLanguages ||
+  ["ja", "en", "zh-cn", "zh-tw", "ko"];
+
+const fallbackLanguage =
+  settings.fallbackLanguage || "ja";
+
+const urlLanguage =
+  params.get("lang");
+
+const storedLanguage =
+  localStorage.getItem("hotelMapLanguage");
+
+const hasLanguageChoice =
+  Boolean(urlLanguage || storedLanguage);
+
+const requestedLanguage =
+  urlLanguage ||
+  storedLanguage ||
+  settings.defaultLanguage ||
+  "ja";
+
+const currentLang =
+  supportedLanguages.includes(requestedLanguage)
+    ? requestedLanguage
+    : fallbackLanguage;
+
+if(
+  urlLanguage &&
+  supportedLanguages.includes(urlLanguage)
+){
+  localStorage.setItem(
+    "hotelMapLanguage",
+    urlLanguage
+  );
+}
+document.documentElement.lang =
+  currentLang === "zh-cn"
+    ? "zh-CN"
+    : currentLang === "zh-tw"
+      ? "zh-TW"
+      : currentLang;
+
+const ui =
+  UI_TEXT[currentLang] ||
+  UI_TEXT[fallbackLanguage] ||
+  UI_TEXT.ja;
+
+const hotelId =
+  params.get("hotel") ||
+  Object.keys(hotels)[0] ||
+  "hotel_a";
+
+const shopId =
+  params.get("shop") ||
+  "";
+
+const slot =
+  params.get("slot") || "standard";
+
+const edition =
+  params.get("edition") || "2026_summer";
+
+const qrId =
+  params.get("qr") ||
+  `qr_${hotelId}_${shopId}_${slot}_${edition}`;
+
+const debugMode =
+  params.get("debug") === "1";
+
+const hotel = hotels[hotelId] || {};
+
+const statusEl =
+  document.getElementById("status");
+
+const cfg =
+  window.SUPABASE_CONFIG || {};
+
+const isConfigured =
+  cfg.url &&
+  cfg.anonKey &&
+  !cfg.url.includes("PASTE_") &&
+  !cfg.anonKey.includes("PASTE_");
+
+const supabase =
+  isConfigured
+    ? createClient(cfg.url, cfg.anonKey)
+    : null;
+  async function fetchShopFromSupabase(){
+  if(!supabase){
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("shops")
+    .select(`
+      id,
+      status,
+      enabled,
+      media,
+      content,
+      actions,
+      coupon,
+      hotel_overrides
+    `)
+    .eq("id", shopId)
+
+.eq("status", "published")
+.eq("enabled", true)
+    .maybeSingle();
+
+  if(error){
+    console.error(
+      "店舗情報の取得に失敗しました：",
+      error
+    );
+
+    return null;
+  }
+
+  if(!data){
+    return null;
+  }
+
+  return {
+    enabled: data.enabled,
+    media: data.media || {
+      hero: "",
+      gallery: []
+    },
+    content: data.content || {},
+    actions: data.actions || {},
+    coupon: data.coupon || {},
+    hotelOverrides: data.hotel_overrides || {}
+  };
+}
+function getLocalizedValue(values, language = currentLang){
+  if(!values){
+    return "";
+  }
+
+  if(typeof values === "string"){
+    return values;
+  }
+
+  return (
+    values[language] ||
+    values[fallbackLanguage] ||
+    values.ja ||
+    values.en ||
+    Object.values(values)[0] ||
+    ""
+  );
 }
 
-async function logEvent(event_type){
-  if(!supabase){
-    statusEl.innerHTML = "Supabase未設定です。<br><code>config.js</code> にURLとanon keyを入れてください。";
+function getLocalizedContent(content){
+  if(!content){
+    return null;
+  }
+
+  return (
+    content[currentLang] ||
+    content[fallbackLanguage] ||
+    content.ja ||
+    content.en ||
+    Object.values(content)[0] ||
+    null
+  );
+}
+
+function mergeActions(baseActions = {}, overrideActions = {}){
+  const keys = new Set([
+    ...Object.keys(baseActions),
+    ...Object.keys(overrideActions)
+  ]);
+
+  const result = {};
+
+  keys.forEach(key => {
+    result[key] = {
+      ...(baseActions[key] || {}),
+      ...(overrideActions[key] || {})
+    };
+  });
+
+  return result;
+}
+
+function resolveShop(base){
+  const override =
+    base.hotelOverrides?.[hotelId] || {};
+
+  return {
+    ...base,
+    ...override,
+
+    media: {
+      ...(base.media || {}),
+      ...(override.media || {})
+    },
+
+    content: {
+      ...(base.content || {}),
+      ...(override.content || {})
+    },
+
+    actions: mergeActions(
+      base.actions || {},
+      override.actions || {}
+    ),
+
+    coupon: {
+      ...(base.coupon || {}),
+      ...(override.coupon || {}),
+
+      text: {
+        ...(base.coupon?.text || {}),
+        ...(override.coupon?.text || {})
+      }
+    }
+  };
+}
+
+function setText(id, value){
+  const element = document.getElementById(id);
+
+  if(element){
+    element.textContent = value || "";
+  }
+}
+
+function setButton(id, label, visible){
+  const button = document.getElementById(id);
+
+  button.textContent = label;
+  button.hidden = !visible;
+}
+
+function createDebugRow(label, value){
+  const row = document.createElement("div");
+  row.className = "kv";
+
+  const strong = document.createElement("b");
+  strong.textContent = label;
+
+  const span = document.createElement("span");
+  span.textContent = String(value || "");
+
+  row.append(strong, span);
+
+  return row;
+}
+
+function showError(message){
+  document.getElementById("shopCard").hidden = true;
+  document.getElementById("errorCard").hidden = false;
+  setText("errorMessage", message);
+}
+
+function renderHero(shop, content){
+  const hero =
+    document.getElementById("heroImage");
+
+  const fallback =
+    document.getElementById("heroFallback");
+
+  fallback.textContent =
+    content.category || content.name || "";
+
+  if(shop.media?.hero){
+    hero.style.backgroundImage =
+      `url("${shop.media.hero}")`;
+
+    hero.style.backgroundPosition =
+      shop.media.heroFocus || "center";
+
+    hero.classList.add("has-image");
+  }else{
+    hero.style.backgroundImage = "";
+    hero.style.backgroundPosition = "";
+    hero.classList.remove("has-image");
+  }
+}
+
+function renderGallery(shop, content){
+  const gallery =
+    document.getElementById("gallery");
+
+  gallery.innerHTML = "";
+
+  const images =
+    Array.isArray(shop.media?.gallery)
+      ? shop.media.gallery.filter(Boolean)
+      : [];
+
+  if(images.length === 0){
+    gallery.hidden = true;
+    return;
+  }
+
+  images.forEach((imageUrl, index) => {
+    const image =
+      document.createElement("img");
+
+    image.src = imageUrl;
+    image.alt =
+      `${content.name} ${index + 1}`;
+
+    image.loading = "lazy";
+
+    image.addEventListener("error", () => {
+      image.remove();
+
+      if(gallery.children.length === 0){
+        gallery.hidden = true;
+      }
+    });
+
+    gallery.appendChild(image);
+  });
+
+  gallery.hidden = false;
+}
+
+function renderTags(tags){
+  const tagList =
+    document.getElementById("tagList");
+
+  tagList.innerHTML = "";
+
+  const values =
+    Array.isArray(tags)
+      ? tags
+      : [];
+
+  values.forEach(tag => {
+    const span =
+      document.createElement("span");
+
+    span.className = "tag";
+    span.textContent = tag;
+
+    tagList.appendChild(span);
+  });
+
+  tagList.hidden =
+    values.length === 0;
+}
+
+function renderBadges(shop, content){
+  const badgeList =
+    document.getElementById("badgeList");
+
+  badgeList.innerHTML = "";
+
+  let badges = [];
+
+  if(Array.isArray(content.badges)){
+    badges = content.badges;
+  }else{
+    if(slot === "premium"){
+      badges.push(ui.premium);
+    }
+
+    if(
+      Object.keys(shop.content || {}).length > 1
+    ){
+      badges.push(ui.inbound);
+    }
+  }
+
+  badges.forEach(label => {
+    const badge =
+      document.createElement("span");
+
+    badge.className = "badge";
+    badge.textContent = label;
+
+    badgeList.appendChild(badge);
+  });
+
+  badgeList.hidden =
+    badges.length === 0;
+}
+
+function renderDetailRow(rowId, value){
+  const row =
+    document.getElementById(rowId);
+
+  row.hidden = !value;
+}
+
+function renderDebug(ctx){
+  const panel =
+    document.getElementById("debugPanel");
+
+  if(!debugMode){
+    panel.hidden = true;
+    return;
+  }
+
+  panel.hidden = false;
+
+  const box =
+    document.getElementById("qrInfo");
+
+  box.innerHTML = "";
+
+  box.append(
+    createDebugRow("ホテル", `${ctx.hotel_name} / ${ctx.hotel_id}`),
+    createDebugRow("店舗", `${ctx.shop_name} / ${ctx.shop_id}`),
+    createDebugRow("言語", ctx.language),
+    createDebugRow("店舗データ", ctx.source),
+    createDebugRow("掲載枠", ctx.slot),
+    createDebugRow("版", ctx.edition),
+    createDebugRow("QR ID", ctx.qr_id)
+  );
+}
+
+// --- 重複計測の簡易対策 -------------------------------------------
+// ページ再読み込み・戻る操作による qr_scan / page_view の連続記録を
+// 抑制するため、同一タブ内では同じQR IDでの初回記録のみ送信する。
+// 厳密なbot対策やクロスセッションの重複排除ではなく、あくまで試験運用
+// 向けの簡易的な間引き。
+function shouldLogOncePerSession(key){
+  try{
+    const flagKey = `qrlog_${key}`;
+
+    if(sessionStorage.getItem(flagKey)){
+      return false;
+    }
+
+    sessionStorage.setItem(flagKey, "1");
+    return true;
+  }catch(_e){
+    // sessionStorageが使えない環境(プライベートモード等)では
+    // 間引きなしで通常通り記録する。
+    return true;
+  }
+}
+
+// クリック系イベントの連打による二重送信を防ぐための簡易ガード。
+function guardAgainstDoubleClick(button){
+  if(!button || button.dataset.clicking === "1"){
     return false;
   }
+
+  button.dataset.clicking = "1";
+  button.disabled = true;
+
+  window.setTimeout(() => {
+    button.disabled = false;
+    delete button.dataset.clicking;
+  }, 1500);
+
+  return true;
+}
+
+async function logEvent(eventType, ctx){
+  if(!supabase){
+    if(statusEl){
+      statusEl.textContent =
+        "Supabase未設定です。config.jsを確認してください。";
+    }
+
+    return false;
+  }
+
+  const trackedUrl =
+    new URL(location.href);
+
+  trackedUrl.searchParams.set(
+    "lang",
+    currentLang
+  );
+
   const payload = {
-    event_type,
+    event_type: eventType,
     hotel_id: ctx.hotel_id,
     hotel_name: ctx.hotel_name,
     shop_id: ctx.shop_id,
@@ -157,52 +1277,544 @@ async function logEvent(event_type){
     edition: ctx.edition,
     qr_id: ctx.qr_id,
     user_agent: navigator.userAgent,
-    page_url: location.href
+    page_url: trackedUrl.toString()
   };
-  const { error } = await supabase.from("events").insert(payload);
+
+  const { error } =
+    await supabase
+      .from("events")
+      .insert(payload);
+
   if(error){
     console.error(error);
-    statusEl.innerHTML = `保存失敗: ${error.message}`;
+
+    if(statusEl){
+      statusEl.textContent =
+        debugMode
+          ? `保存失敗：${error.message}`
+          : "保存に失敗しました。";
+    }
+
     return false;
   }
-  statusEl.innerHTML = `保存成功: <code>${event_type}</code>`;
+
+  if(statusEl){
+    statusEl.textContent =
+      `保存成功：${eventType}`;
+  }
+
   return true;
 }
 
-document.getElementById("reserveBtn").addEventListener("click", async () => {
-  await logEvent("reserve_click");
-  const q = new URLSearchParams({
-    from_hotel: ctx.hotel_id,
-    from_qr: ctx.qr_id,
-    shop: ctx.shop_id,
-    lang: "ja"
-  });
-  location.href = "reservation_mock.html?" + q.toString();
-});
+function buildInternalUrl(url, ctx){
+  const destination =
+    new URL(url, location.href);
 
-document.getElementById("mapBtn").addEventListener("click", async () => {
-  await logEvent("map_click");
-  alert("デモ：地図クリックを保存しました。本番ではGoogleマップへ遷移します。");
-});
+  if(destination.origin === location.origin){
+    destination.searchParams.set(
+      "from_hotel",
+      ctx.hotel_id
+    );
 
-document.getElementById("phoneBtn").addEventListener("click", async () => {
-  await logEvent("phone_click");
-  alert("デモ：電話クリックを保存しました。本番では tel:011-000-0000 へ遷移します。");
-});
+    destination.searchParams.set(
+      "from_qr",
+      ctx.qr_id
+    );
 
-document.getElementById("couponBtn").addEventListener("click", async () => {
-  document.getElementById("couponBox").classList.toggle("show");
-  await logEvent("coupon_view");
-});
+    destination.searchParams.set(
+      "shop",
+      ctx.shop_id
+    );
 
-renderQRInfo();
+    destination.searchParams.set(
+      "lang",
+      currentLang
+    );
+  }
 
-if(!isConfigured){
-  statusEl.innerHTML = "Supabase未設定です。<br><code>config.js</code> を編集してください。";
-} else {
-  await logEvent("qr_scan");
-  await logEvent("page_view");
+  return destination.toString();
 }
+
+async function moveToUrl(eventType, url, ctx){
+  if(!url){
+    return;
+  }
+
+  await logEvent(eventType, ctx);
+
+  location.href =
+    buildInternalUrl(url, ctx);
+}
+async function resolveQrRoute(){
+  const params =
+    new URLSearchParams(window.location.search);
+
+  const qrCode =
+    (params.get("qr") || "")
+      .trim()
+      .toLowerCase();
+
+  // QRなしの直接アクセスは、
+  // 現在のテスト用動作を残す
+  if(!qrCode){
+  return "missing";
+}
+  const {
+    data,
+    error
+  } = await supabase
+    .from("qr_routes")
+    .select(
+      "qr_code,hotel_id,shop_id,slot,edition,enabled"
+    )
+    .eq("qr_code", qrCode)
+    .eq("enabled", true)
+    .maybeSingle();
+
+  if(error){
+    console.error(
+      "QRルートの取得に失敗しました：",
+      error
+    );
+
+    throw error;
+  }
+
+  if(!data){
+    return "invalid";
+  }
+
+  // URL内のhotelやshopを信用せず、
+  // Supabaseの登録内容に直す
+  const canonicalUrl =
+    new URL(window.location.href);
+
+  canonicalUrl.searchParams.set(
+    "hotel",
+    data.hotel_id
+  );
+
+  canonicalUrl.searchParams.set(
+    "shop",
+    data.shop_id
+  );
+
+  canonicalUrl.searchParams.set(
+    "slot",
+    data.slot
+  );
+
+  canonicalUrl.searchParams.set(
+    "edition",
+    data.edition
+  );
+
+  canonicalUrl.searchParams.set(
+    "qr",
+    data.qr_code
+  );
+
+  if(
+    canonicalUrl.toString() !==
+    window.location.href
+  ){
+    window.location.replace(
+      canonicalUrl.toString()
+    );
+
+    return "redirecting";
+  }
+
+  return "resolved";
+}
+  async function initialize(){
+  const qrResolution =
+    await resolveQrRoute();
+
+  if(qrResolution === "redirecting"){
+    return;
+  }
+
+    if(qrResolution === "missing"){
+  showError(
+    "QRコードからアクセスしてください。"
+  );
+
+  return;
+}
+  if(qrResolution === "invalid"){
+    showError(
+      "このQRコードは無効、または現在利用できません。"
+    );
+
+    return;
+  }
+
+  setText("pageTitle", ui.pageTitle);
+  setText("pageSubtitle", ui.pageSubtitle);
+
+  document.title = ui.pageTitle;
+
+  setText("priceLabel", ui.price);
+  setText("hoursLabel", ui.hours);
+  setText("closedLabel", ui.closed);
+
+const databaseShop =
+  await fetchShopFromSupabase();
+
+const baseShop =
+  databaseShop;
+
+const shopSource =
+  databaseShop
+    ? "Supabase"
+    : "未取得";
+
+if(!baseShop){
+  showError(
+    "この店舗は現在公開されていません。"
+  );
+
+  return;
+}
+    if(!baseShop || baseShop.enabled === false){
+    showError(`${ui.notFound} shop=${shopId}`);
+    return;
+  }
+
+  const shop =
+    resolveShop(baseShop);
+
+  const content =
+    getLocalizedContent(shop.content);
+
+  if(!content){
+    showError("店舗の紹介文が登録されていません。");
+    return;
+  }
+
+  const hotelName =
+    getLocalizedValue(hotel.name) ||
+    hotelId;
+
+  const ctx = {
+    hotel_id: hotelId,
+    hotel_name: hotelName,
+    shop_id: shopId,
+    shop_name: content.name || shopId,
+    slot,
+    edition,
+    qr_id: qrId,
+    language: currentLang,
+    source: shopSource  };
+
+  document.getElementById("errorCard").hidden = true;
+  document.getElementById("shopCard").hidden = false;
+
+  renderHero(shop, content);
+  renderGallery(shop, content);
+  renderTags(content.tags);
+  renderBadges(shop, content);
+
+  setText("shopName", content.name);
+  setText(
+    "shopMeta",
+    [
+      content.category,
+      content.area,
+      content.access
+    ].filter(Boolean).join(" / ")
+  );
+
+  setText("catchcopy", content.catchcopy);
+  setText("description", content.description);
+
+  setText("price", content.price);
+  setText("hours", content.hours);
+  setText("closed", content.closed);
+
+  renderDetailRow("priceRow", content.price);
+  renderDetailRow("hoursRow", content.hours);
+  renderDetailRow("closedRow", content.closed);
+
+  const actions =
+    shop.actions || {};
+
+  const reservationEnabled =
+    actions.reservation?.enabled &&
+    actions.reservation?.url;
+
+  const mapEnabled =
+    actions.map?.enabled &&
+    actions.map?.url;
+
+  const phoneEnabled =
+    actions.phone?.enabled &&
+    actions.phone?.value;
+
+  const instagramEnabled =
+    actions.instagram?.enabled &&
+    actions.instagram?.url;
+
+  const websiteEnabled =
+    actions.website?.enabled &&
+    actions.website?.url;
+
+  const couponText =
+    getLocalizedValue(shop.coupon?.text);
+
+  const couponEnabled =
+    shop.coupon?.enabled &&
+    couponText;
+
+  setButton(
+    "reserveBtn",
+    ui.reserve,
+    reservationEnabled
+  );
+
+  setButton(
+    "mapBtn",
+    ui.map,
+    mapEnabled
+  );
+
+  setButton(
+    "phoneBtn",
+    ui.phone,
+    phoneEnabled
+  );
+
+  setButton(
+    "instagramBtn",
+    ui.instagram,
+    instagramEnabled
+  );
+
+  setButton(
+    "websiteBtn",
+    ui.website,
+    websiteEnabled
+  );
+
+  setButton(
+    "couponBtn",
+    ui.coupon,
+    couponEnabled
+  );
+
+  if(reservationEnabled){
+    document
+      .getElementById("reserveBtn")
+      .addEventListener("click", (event) => {
+        if(!guardAgainstDoubleClick(event.currentTarget)){
+          return;
+        }
+
+        moveToUrl(
+          "reserve_click",
+          actions.reservation.url,
+          ctx
+        );
+      });
+  }
+
+  if(mapEnabled){
+    document
+      .getElementById("mapBtn")
+      .addEventListener("click", (event) => {
+        if(!guardAgainstDoubleClick(event.currentTarget)){
+          return;
+        }
+
+        moveToUrl(
+          "map_click",
+          actions.map.url,
+          ctx
+        );
+      });
+  }
+
+  if(phoneEnabled){
+    document
+      .getElementById("phoneBtn")
+      .addEventListener("click", async (event) => {
+        if(!guardAgainstDoubleClick(event.currentTarget)){
+          return;
+        }
+
+        await logEvent(
+          "phone_click",
+          ctx
+        );
+
+        location.href =
+          `tel:${actions.phone.value}`;
+      });
+  }
+
+  if(instagramEnabled){
+    document
+      .getElementById("instagramBtn")
+      .addEventListener("click", (event) => {
+        if(!guardAgainstDoubleClick(event.currentTarget)){
+          return;
+        }
+
+        moveToUrl(
+          "instagram_click",
+          actions.instagram.url,
+          ctx
+        );
+      });
+  }
+
+  if(websiteEnabled){
+    document
+      .getElementById("websiteBtn")
+      .addEventListener("click", (event) => {
+        if(!guardAgainstDoubleClick(event.currentTarget)){
+          return;
+        }
+
+        moveToUrl(
+          "website_click",
+          actions.website.url,
+          ctx
+        );
+      });
+  }
+
+  if(couponEnabled){
+    setText("couponText", couponText);
+
+    const couponCode =
+      shop.coupon?.code || "";
+
+    setText("couponCode", couponCode);
+
+    const codeWrap =
+      document.getElementById("couponCodeWrap");
+
+    codeWrap.hidden = !couponCode;
+
+    if(couponCode){
+      codeWrap.childNodes[0].textContent =
+        `${ui.couponCode}：`;
+    }
+
+    document
+      .getElementById("couponBtn")
+      .addEventListener("click", async (event) => {
+        if(!guardAgainstDoubleClick(event.currentTarget)){
+          return;
+        }
+
+        document
+          .getElementById("couponBox")
+          .classList.toggle("show");
+
+        await logEvent(
+          "coupon_view",
+          ctx
+        );
+      });
+  }
+
+  renderDebug(ctx);
+
+  if(!isConfigured){
+    if(statusEl){
+      statusEl.textContent =
+        "Supabase未設定です。config.jsを確認してください。";
+    }
+
+    return;
+  }
+
+  if(shouldLogOncePerSession(`${ctx.qr_id}_scan`)){
+    logEvent("qr_scan", ctx);
+  }
+
+  if(shouldLogOncePerSession(`${ctx.qr_id}_view`)){
+    logEvent("page_view", ctx);
+  }
+}
+const languageScreen =
+  document.getElementById("languageScreen");
+
+const languageButton =
+  document.getElementById("languageButton");
+
+const closeLanguageButton =
+  document.getElementById("closeLanguageButton");
+
+const languageNames = {
+  ja: "日本語",
+  en: "English",
+  "zh-cn": "简体中文",
+  "zh-tw": "繁體中文",
+  ko: "한국어"
+};
+
+languageButton.textContent =
+  `🌐 ${languageNames[currentLang] || "Language"}`;
+
+function openLanguageScreen(){
+  languageScreen.hidden = false;
+}
+
+function closeLanguageScreen(){
+  languageScreen.hidden = true;
+}
+
+function changeLanguage(language){
+  if(!supportedLanguages.includes(language)){
+    return;
+  }
+
+  localStorage.setItem(
+    "hotelMapLanguage",
+    language
+  );
+
+  const nextUrl =
+    new URL(location.href);
+
+  nextUrl.searchParams.set(
+    "lang",
+    language
+  );
+
+  location.href =
+    nextUrl.toString();
+}
+
+document
+  .querySelectorAll("[data-language]")
+  .forEach(button => {
+    button.addEventListener("click", () => {
+      changeLanguage(
+        button.dataset.language
+      );
+    });
+  });
+
+languageButton.addEventListener(
+  "click",
+  openLanguageScreen
+);
+
+closeLanguageButton.addEventListener(
+  "click",
+  closeLanguageScreen
+);
+
+if(!hasLanguageChoice){
+  closeLanguageButton.hidden = true;
+  openLanguageScreen();
+}
+  initialize().catch(error => {   console.error(     "初期化に失敗しました：",     error   );    showError(     "店舗情報の読み込みに失敗しました。"   ); });
 </script>
 </body>
 </html>
