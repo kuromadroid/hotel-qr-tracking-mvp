@@ -1630,8 +1630,54 @@ createShopButton.addEventListener("click", async () => {
       }
     );
 
+    const deleteRouteButton =
+      document.createElement("button");
+
+    deleteRouteButton.type = "button";
+    deleteRouteButton.className = "danger-btn";
+    deleteRouteButton.textContent = "削除";
+    deleteRouteButton.style.marginLeft = "8px";
+
+    deleteRouteButton.addEventListener(
+      "click",
+      async () => {
+        const confirmed = confirm(
+          `QRコード「${route.qr_code}」を削除しますか？\n` +
+          `この操作は取り消せません。印刷済みのパンフレット等から` +
+          `このQRを読み取っても、以後アクセスできなくなります。`
+        );
+
+        if(!confirmed){
+          return;
+        }
+
+        deleteRouteButton.disabled = true;
+        deleteRouteButton.textContent = "削除中...";
+
+        const { error } = await supabase
+          .from("qr_routes")
+          .delete()
+          .eq("qr_code", route.qr_code);
+
+        if(error){
+          console.error(error);
+
+          alert(
+            `削除に失敗しました：${error.message}`
+          );
+
+          deleteRouteButton.disabled = false;
+          deleteRouteButton.textContent = "削除";
+          return;
+        }
+
+        await loadQrRoutes();
+      }
+    );
+
     card.appendChild(copyButton);
     card.appendChild(toggleButton);
+    card.appendChild(deleteRouteButton);
 
     qrList.appendChild(card);
   });
