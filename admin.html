@@ -345,6 +345,18 @@
     <div id="editForm" class="placeholder" hidden>
   <h2>店舗情報の編集</h2>
 
+  <p class="message">
+    店舗名・キャッチコピー・紹介文・住所・営業時間・タグは言語ごとに入力できます。下のタブで言語を切り替えて入力してください。未入力の言語は日本語の内容が自動的に代わりに表示されます。
+  </p>
+
+  <div id="langTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 16px;">
+    <button type="button" class="lang-tab-btn" data-lang="ja">日本語</button>
+    <button type="button" class="lang-tab-btn" data-lang="en">English</button>
+    <button type="button" class="lang-tab-btn" data-lang="zh-cn">简体中文</button>
+    <button type="button" class="lang-tab-btn" data-lang="zh-tw">繁體中文</button>
+    <button type="button" class="lang-tab-btn" data-lang="ko">한국어</button>
+  </div>
+
   <label for="editName">店舗名</label>
   <input id="editName" type="text">
 
@@ -358,6 +370,15 @@
 
 <label for="editHours">営業時間</label>
 <input id="editHours" type="text">
+
+<label for="editTags">タグ(カンマ区切り・この言語のみに表示)</label>
+<input id="editTags" type="text" placeholder="例：海鮮, 炭火焼き, 深夜営業">
+
+<h3>バッジ(店名の近くに表示・全言語共通で自動翻訳)</h3>
+<p class="message">
+  チェックした項目は、お客様が選んでいる言語に応じて自動的に翻訳された文言で表示されます。
+</p>
+<div id="badgeCheckboxes"></div>
       <h3>メイン画像</h3>
 
 <p class="message" id="heroFocusHint" hidden>
@@ -532,6 +553,198 @@ const supabase =
     cfg.anonKey
   );
 
+const SUPPORTED_LANGS = ["ja", "en", "zh-cn", "zh-tw", "ko"];
+
+const LANG_LABELS = {
+  ja: "日本語",
+  en: "English",
+  "zh-cn": "简体中文",
+  "zh-tw": "繁體中文",
+  ko: "한국어"
+};
+
+// 店名の近くに表示するバッジのプリセット。
+// キーは共通で、言語ごとの表示文言だけが違う。
+// チェックした言語(=すでに店舗情報が入力されている言語)にだけ反映される。
+const BADGE_PRESETS = {
+  english_menu: {
+    ja: "英語メニューあり",
+    en: "English menu available",
+    "zh-cn": "提供英文菜单",
+    "zh-tw": "提供英文菜單",
+    ko: "영어 메뉴 있음"
+  },
+  credit_card: {
+    ja: "カード可",
+    en: "Credit cards accepted",
+    "zh-cn": "支持信用卡",
+    "zh-tw": "支援信用卡",
+    ko: "카드 결제 가능"
+  },
+  late_night: {
+    ja: "深夜営業",
+    en: "Late night",
+    "zh-cn": "深夜营业",
+    "zh-tw": "深夜營業",
+    ko: "심야 영업"
+  },
+  all_you_can_drink: {
+    ja: "飲み放題あり",
+    en: "All-you-can-drink",
+    "zh-cn": "畅饮套餐",
+    "zh-tw": "暢飲方案",
+    ko: "음료 무제한"
+  },
+  private_room: {
+    ja: "個室あり",
+    en: "Private rooms",
+    "zh-cn": "设有包间",
+    "zh-tw": "設有包廂",
+    ko: "개별룸 있음"
+  },
+  non_smoking: {
+    ja: "禁煙",
+    en: "Non-smoking",
+    "zh-cn": "禁烟",
+    "zh-tw": "禁菸",
+    ko: "금연"
+  },
+  vegetarian: {
+    ja: "ベジタリアン対応",
+    en: "Vegetarian options",
+    "zh-cn": "提供素食",
+    "zh-tw": "提供素食",
+    ko: "채식 메뉴 있음"
+  },
+  halal: {
+    ja: "ハラール対応",
+    en: "Halal options",
+    "zh-cn": "提供清真餐",
+    "zh-tw": "提供清真餐",
+    ko: "할랄 메뉴 있음"
+  },
+  solo_friendly: {
+    ja: "おひとり様歓迎",
+    en: "Solo diners welcome",
+    "zh-cn": "欢迎单人用餐",
+    "zh-tw": "歡迎單人用餐",
+    ko: "혼밥 환영"
+  }
+};
+
+function flushLangFields(editForm){
+  const lang = editForm.dataset.activeLang || "ja";
+
+  const editName = document.getElementById("editName");
+  const editCatchcopy = document.getElementById("editCatchcopy");
+  const editDescription = document.getElementById("editDescription");
+  const editAddress = document.getElementById("editAddress");
+  const editHours = document.getElementById("editHours");
+  const editTags = document.getElementById("editTags");
+
+  const tags = editTags.value
+    .split(",")
+    .map(part => part.trim())
+    .filter(Boolean);
+
+  editForm._draftContent = editForm._draftContent || {};
+
+  editForm._draftContent[lang] = {
+    ...(editForm._draftContent[lang] || {}),
+    name: editName.value.trim(),
+    catchcopy: editCatchcopy.value.trim(),
+    description: editDescription.value.trim(),
+    address: editAddress.value.trim(),
+    hours: editHours.value.trim(),
+    tags: tags
+  };
+}
+
+function loadLangFields(editForm, lang){
+  const c = (editForm._draftContent && editForm._draftContent[lang]) || {};
+
+  document.getElementById("editName").value = c.name || "";
+  document.getElementById("editCatchcopy").value = c.catchcopy || "";
+  document.getElementById("editDescription").value = c.description || "";
+  document.getElementById("editAddress").value = c.address || "";
+  document.getElementById("editHours").value = c.hours || "";
+
+  document.getElementById("editTags").value =
+    Array.isArray(c.tags) ? c.tags.join(", ") : "";
+}
+
+function updateLangTabUi(editForm){
+  const activeLang = editForm.dataset.activeLang || "ja";
+
+  document.querySelectorAll(".lang-tab-btn").forEach(btn => {
+    const isActive = btn.dataset.lang === activeLang;
+
+    btn.style.fontWeight = isActive ? "800" : "400";
+    btn.style.textDecoration = isActive ? "underline" : "none";
+    btn.style.opacity = isActive ? "1" : "0.6";
+  });
+}
+
+function detectSelectedBadgeKeys(content){
+  const jaBadges = content?.ja?.badges;
+  const selected = new Set();
+
+  if(Array.isArray(jaBadges)){
+    Object.keys(BADGE_PRESETS).forEach(key => {
+      if(jaBadges.includes(BADGE_PRESETS[key].ja)){
+        selected.add(key);
+      }
+    });
+  }
+
+  return selected;
+}
+
+function renderBadgeCheckboxes(editForm){
+  const wrap = document.getElementById("badgeCheckboxes");
+  wrap.innerHTML = "";
+
+  editForm._badgeKeys = editForm._badgeKeys || new Set();
+
+  Object.keys(BADGE_PRESETS).forEach(key => {
+    const label = document.createElement("label");
+    label.style.display = "block";
+    label.style.fontWeight = "400";
+    label.style.margin = "4px 0";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = key;
+    checkbox.checked = editForm._badgeKeys.has(key);
+
+    checkbox.addEventListener("change", () => {
+      if(checkbox.checked){
+        editForm._badgeKeys.add(key);
+      }else{
+        editForm._badgeKeys.delete(key);
+      }
+    });
+
+    label.appendChild(checkbox);
+    label.appendChild(
+      document.createTextNode(` ${BADGE_PRESETS[key].ja}`)
+    );
+
+    wrap.appendChild(label);
+  });
+}
+
+document.querySelectorAll(".lang-tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const editForm = document.getElementById("editForm");
+
+    flushLangFields(editForm);
+    editForm.dataset.activeLang = btn.dataset.lang;
+    updateLangTabUi(editForm);
+    loadLangFields(editForm, btn.dataset.lang);
+  });
+});
+
 function showLogin(message = "", isError = false){
   loginCard.hidden = false;
   adminCard.hidden = true;
@@ -656,19 +869,16 @@ const editEnabled =
   document.getElementById("editEnabled");
   editForm.dataset.shopId = shop.id;
 
-  editName.value =
-    shop.content?.ja?.name || "";
+  editForm._draftContent =
+    JSON.parse(JSON.stringify(shop.content || {}));
 
-  editCatchcopy.value =
-    shop.content?.ja?.catchcopy || "";
-  editDescription.value =
-  shop.content?.ja?.description || "";
+  editForm.dataset.activeLang = "ja";
+  updateLangTabUi(editForm);
+  loadLangFields(editForm, "ja");
 
-editAddress.value =
-  shop.content?.ja?.address || "";
-
-editHours.value =
-  shop.content?.ja?.hours || "";
+  editForm._badgeKeys =
+    detectSelectedBadgeKeys(shop.content || {});
+  renderBadgeCheckboxes(editForm);
 
   const heroPreviewWrap =
   document.getElementById("heroPreviewWrap");
@@ -901,16 +1111,13 @@ const editEnabled =
       document.getElementById("saveShopButton");
 
     const shopId = editForm.dataset.shopId;
-    const name = editName.value.trim();
-    const catchcopy = editCatchcopy.value.trim();
-    const description =
-  editDescription.value.trim();
 
-const address =
-  editAddress.value.trim();
+    // 現在表示中の言語タブの入力内容を下書きに反映してから保存する。
+    flushLangFields(editForm);
 
-const hours =
-  editHours.value.trim();const reservationUrl =
+    const name =
+      (editForm._draftContent?.ja?.name || "").trim();
+const reservationUrl =
   document.getElementById("editReservationUrl").value.trim();
 
 const reservationEnabled =
@@ -1067,18 +1274,46 @@ const updatedMedia = {
   hero: heroUrl,
   heroFocus: editForm.dataset.heroFocus || "50% 50%"
 };
+      // 下書き(editForm._draftContent)には、これまでタブ切り替え時に
+      // 保存してきた各言語の入力内容が入っている。
+      // これをそのままDBに保存する内容のベースにする。
       const updatedContent = {
-        ...(shop.content || {})
+        ...(editForm._draftContent || {})
       };
 
-     updatedContent.ja = {
-  ...(updatedContent.ja || {}),
-  name: name,
-  catchcopy: catchcopy,
-  description: description,
-  address: address,
-  hours: hours
-};
+      // バッジは全言語共通の選択(チェックボックス)から、
+      // 実際に店舗情報が入力されている言語(=名前がある言語)にだけ
+      // 翻訳済みの文言を反映する。未入力の言語は日本語の内容に
+      // 自動的に代わるので、そのままにしておく。
+      // 1つもチェックしていない場合はbadgesキー自体を削除し、
+      // 「プレミアム掲載」「インバウンド対応」の自動表示に戻す。
+      const selectedBadgeKeys =
+        Array.from(editForm._badgeKeys || []);
+
+      SUPPORTED_LANGS.forEach(lang => {
+        const hasContent =
+          lang === "ja" ||
+          (updatedContent[lang] && updatedContent[lang].name);
+
+        if(!hasContent){
+          return;
+        }
+
+        const langContent = {
+          ...(updatedContent[lang] || {})
+        };
+
+        if(selectedBadgeKeys.length > 0){
+          langContent.badges = selectedBadgeKeys.map(
+            key => BADGE_PRESETS[key][lang] || BADGE_PRESETS[key].ja
+          );
+        }else{
+          delete langContent.badges;
+        }
+
+        updatedContent[lang] = langContent;
+      });
+
 const updatedActions = {
   ...(shop.actions || {}),
 
