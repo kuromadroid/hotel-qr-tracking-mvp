@@ -768,18 +768,77 @@ deleteButton.style.marginTop = "12px";
 deleteButton.style.marginLeft = "8px";
 
 deleteButton.addEventListener("click", async () => {
-  const confirmed = confirm(
+  const initialConfirmed = confirm(
     `店舗「${name}」(ID: ${shop.id})を削除しますか？\n` +
-    `この操作は取り消せません。この店舗を参照しているQRコードは、` +
-    `以後「無効なQRコード」として表示されるようになります` +
-    `(QRコード自体や過去の計測データは削除されません)。`
+    `この操作は取り消せません。`
   );
 
-  if(!confirmed){
+  if(!initialConfirmed){
     return;
   }
 
   deleteButton.disabled = true;
+  deleteButton.textContent = "確認中...";
+
+  // この店舗を参照しているQRルートがあるか先に確認する。
+  // 外部キー制約により、参照が残っていると店舗の削除はできない。
+  const {
+    data: linkedRoutes,
+    error: linkedRoutesError
+  } = await supabase
+    .from("qr_routes")
+    .select("qr_code")
+    .eq("shop_id", shop.id);
+
+  if(linkedRoutesError){
+    console.error(linkedRoutesError);
+
+    alert(
+      `QRルートの確認に失敗しました：${linkedRoutesError.message}`
+    );
+
+    deleteButton.disabled = false;
+    deleteButton.textContent = "削除";
+    return;
+  }
+
+  const linkedCount = (linkedRoutes || []).length;
+
+  if(linkedCount > 0){
+    const cascadeConfirmed = confirm(
+      `この店舗には ${linkedCount} 件のQRコードが紐づいています。\n` +
+      `店舗を削除すると、これらのQRコードも一緒に削除され、` +
+      `印刷済みのパンフレット等からアクセスできなくなります。\n\n` +
+      `QRコードごと削除してよろしいですか？\n` +
+      `(「キャンセル」を選ぶと、店舗もQRコードも削除されません)`
+    );
+
+    if(!cascadeConfirmed){
+      deleteButton.disabled = false;
+      deleteButton.textContent = "削除";
+      return;
+    }
+
+    deleteButton.textContent = "QRコードを削除中...";
+
+    const { error: deleteRoutesError } = await supabase
+      .from("qr_routes")
+      .delete()
+      .eq("shop_id", shop.id);
+
+    if(deleteRoutesError){
+      console.error(deleteRoutesError);
+
+      alert(
+        `QRコードの削除に失敗しました：${deleteRoutesError.message}`
+      );
+
+      deleteButton.disabled = false;
+      deleteButton.textContent = "削除";
+      return;
+    }
+  }
+
   deleteButton.textContent = "削除中...";
 
   const { error: deleteError } = await supabase
@@ -799,7 +858,11 @@ deleteButton.addEventListener("click", async () => {
     return;
   }
 
-  alert("店舗を削除しました。");
+  alert(
+    linkedCount > 0
+      ? `店舗と、紐づいていた ${linkedCount} 件のQRコードを削除しました。`
+      : "店舗を削除しました。"
+  );
 
   await loadShops();
   await loadQrRoutes();
